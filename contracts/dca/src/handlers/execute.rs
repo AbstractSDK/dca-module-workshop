@@ -33,6 +33,7 @@ fn create_convert_task_internal(
         // TODO?: should it be argument?
         stop_on_fail: true,
         actions: vec![CronCatAction {
+            // #3 remove and explain what is expected
             msg: wasm_execute(
                 env.contract.address,
                 &ExecuteMsg::from(DCAExecuteMsg::Convert {
@@ -117,7 +118,7 @@ pub fn execute_handler(
 /// Update the configuration of the app
 fn update_config(
     deps: DepsMut,
-    msg_info: MessageInfo,
+    _msg_info: MessageInfo,
     app: DCAApp,
     new_native_denom: Option<String>,
     new_dca_creation_amount: Option<Uint128>,
@@ -125,7 +126,9 @@ fn update_config(
     new_max_spread: Option<Decimal>,
 ) -> AppResult {
     // Only the admin should be able to call this
-    app.admin.assert_admin(deps.as_ref(), &msg_info.sender)?;
+    // #1 
+    // Hint: https://docs.rs/abstract-app/0.17.0/abstract_app/state/struct.AppContract.html#
+
     let old_config = CONFIG.load(deps.storage)?;
 
     CONFIG.save(
@@ -158,8 +161,11 @@ fn create_dca(
     let config = CONFIG.load(deps.storage)?;
 
     // Simulate swap first
-    app.dex(deps.as_ref(), dex_name.clone())
-        .simulate_swap(source_asset.clone(), target_asset.clone())?;
+    // #2
+    // Using the DEX API
+    // What is an API: https://docs.abstract.money/4_get_started/4_sdk.html
+    // The Dex API: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/adapters/dex/src/api.rs
+
 
     // Generate DCA ID
     let id = NEXT_ID.update(deps.storage, |id| AppResult::Ok(id + 1))?;
@@ -210,8 +216,9 @@ fn update_dca(
     };
 
     // Simulate swap for a new dca
-    app.dex(deps.as_ref(), new_dca.dex.clone())
-        .simulate_swap(new_dca.source_asset.clone(), new_dca.target_asset.clone())?;
+    // #2 
+    // app.dex(deps.as_ref(), new_dca.dex.clone())
+    //     .simulate_swap(new_dca.source_asset.clone(), new_dca.target_asset.clone())?;
 
     DCA_LIST.save(deps.storage, dca_id.clone(), &new_dca)?;
 
@@ -233,6 +240,7 @@ fn cancel_dca(deps: DepsMut, info: MessageInfo, app: DCAApp, dca_id: String) -> 
 
     DCA_LIST.remove(deps.storage, dca_id.clone());
 
+    // #3
     let cron_cat = app.cron_cat(deps.as_ref());
     let remove_task_msg = cron_cat.remove_task(dca_id)?;
 
