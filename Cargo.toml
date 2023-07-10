@@ -1,8 +1,6 @@
 [workspace]
 members = [
-  "contracts/apps/*",
-  "contracts/adapters/*",
-  "packages/bundles/wyndex",
+  "contracts/*",
 ]
 
 # Enable the version 2 feature resolver, which avoids unifying features for targets that are not being built
@@ -67,36 +65,25 @@ abstract-core = { version = "0.17.0" }
 abstract-macros = { version = "0.17.0" }
 abstract-ica = { version = "0.17.0" }
 
-abstract-dex-adapter = { path = "./contracts/adapters/dex" }
-abstract-adapter-utils = { path = "../framework/packages/utils" }
-abstract-dex-adapter-traits = { path = "../framework/packages/dex" }
-abstract-staking-adapter-traits = { path = "../framework/packages/staking" }
+abstract-dex-adapter = { git = "https://github.com/AbstractSDK/abstract.git", tag = "v0.17.0" }
+abstract-adapter-utils = { git = "https://github.com/AbstractSDK/abstract.git", tag = "v0.17.0" }
+abstract-dex-adapter-traits = { git = "https://github.com/AbstractSDK/abstract.git", tag = "v0.17.0" }
+abstract-staking-adapter-traits = { git = "https://github.com/AbstractSDK/abstract.git", tag = "v0.17.0" }
 
 # Juno dexes #
-abstract-wyndex-adapter = { path = "../integrations/wyndex/packages/wyndex-adapter", default-features = false }
+abstract-wyndex-adapter = { git = "https://github.com/AbstractSDK/abstract.git", tag = "v0.17.0", default-features = false }
 # Osmosis #
-abstract-osmosis-adapter = { path = "../integrations/osmosis/packages/abstract-adapter", default-features = false }
+abstract-osmosis-adapter = { git = "https://github.com/AbstractSDK/abstract.git", tag = "v0.17.0", default-features = false }
 # Terra #
-abstract-astroport-adapter = { path = "../integrations/astroport/packages/abstract-adapter", default-features = false }
-croncat-app = { path = "./contracts/apps/croncat" }
-wyndex-bundle = { path = "./packages/bundles/wyndex" }
+abstract-astroport-adapter = { git = "https://github.com/AbstractSDK/abstract.git", tag = "v0.17.0", default-features = false }
+croncat-app = { git = "https://github.com/AbstractSDK/abstract.git", tag = "v0.17.0" }
+wyndex-bundle = { git = "https://github.com/AbstractSDK/abstract.git", tag = "v0.17.0" }
 
 ## Testing
 cw-multi-test = { version = "0.16.2" }
 rstest = "0.17.0"
 speculoos = "0.11.0"
 anyhow = "1"
-
-# this ensures local compatability when compiling locally
-[patch.crates-io]
-abstract-adapter = { path = "../framework/packages/abstract-adapter" }
-abstract-app = { path = "../framework/packages/abstract-app" }
-abstract-interface = { path = "../framework/packages/abstract-interface" }
-abstract-sdk = { path = "../framework/packages/abstract-sdk" }
-abstract-testing = { path = "../framework/packages/abstract-testing" }
-abstract-core = { path = "../framework/packages/abstract-core" }
-abstract-macros = { path = "../framework/packages/abstract-macros" }
-abstract-ica = { path = "../framework/packages/abstract-ica" }
 
 # Backup release profile, will result in warnings during optimization
 [profile.release]
