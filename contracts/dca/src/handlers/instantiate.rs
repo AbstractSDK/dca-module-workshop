@@ -1,25 +1,23 @@
-use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
+#![allow(unused)]
+use cosmwasm_std::{DepsMut, Empty, Env, MessageInfo, Response};
 
 use crate::contract::{AppResult, DCAApp};
 use crate::msg::AppInstantiateMsg;
-use crate::state::{Config, CONFIG, NEXT_ID};
+use crate::state::{Config, CONFIG, NEXT_DCA_ID};
 
 pub fn instantiate_handler(
     deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
     _app: DCAApp,
-    msg: AppInstantiateMsg,
+    // QUEST #3.3
+    // Replace this with the custom instantiate message type and set the `Config` object with it.
+    msg: Empty,
 ) -> AppResult {
-    let config: Config = Config {
-        native_denom: msg.native_denom,
-        dca_creation_amount: msg.dca_creation_amount,
-        refill_threshold: msg.refill_threshold,
-        max_spread: msg.max_spread,
-    };
+    let config: Config = Config::default();
 
     CONFIG.save(deps.storage, &config)?;
-    NEXT_ID.save(deps.storage, &0)?;
+    NEXT_DCA_ID.save(deps.storage, &0)?;
     // Example instantiation that doesn't do anything
     Ok(Response::new())
 }

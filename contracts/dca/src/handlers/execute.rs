@@ -1,22 +1,40 @@
 #![allow(clippy::too_many_arguments)]
+#![allow(unused)]
 
-use abstract_core::objects::{AssetEntry, DexName};
-use abstract_dex_adapter::msg::OfferAsset;
-use abstract_sdk::features::AbstractResponse;
+use abstract_core::{
+    adapter::AdapterRequestMsg,
+    objects::{AssetEntry, DexName},
+};
+use abstract_dex_adapter::{api::DexInterface, msg::OfferAsset};
+use abstract_sdk::{
+    base::ExecuteEndpoint, features::AbstractResponse, AbstractSdkResult, AppInterface,
+    ModuleInterface,
+};
 use cosmwasm_std::{
     wasm_execute, CosmosMsg, Decimal, DepsMut, Env, MessageInfo, Response, Uint128,
 };
-use cw_asset::{Asset, AssetList};
+use croncat_app::{
+    contract::CRONCAT_ID,
+    croncat_integration_utils::{CronCatAction, CronCatTaskRequest},
+    CronCat, CronCatInterface,
+};
+use cw_asset::{Asset, AssetList, AssetListUnchecked};
 
-use crate::contract::{AppResult, DCAApp};
+use crate::{
+    contract::{AppResult, DCAApp},
+    error::AppError,
+    msg::{DCAExecuteMsg, ExecuteMsg, Frequency},
+    state::{Config, DCAEntry, CONFIG, DCA_LIST, NEXT_DCA_ID},
+};
 
-use crate::error::AppError;
-use crate::msg::{DCAExecuteMsg, ExecuteMsg, Frequency};
-use crate::state::{Config, DCAEntry, CONFIG, DCA_LIST, NEXT_ID};
-use abstract_dex_adapter::api::DexInterface;
-use abstract_sdk::AbstractSdkResult;
-use croncat_app::croncat_integration_utils::{CronCatAction, CronCatTaskRequest};
-use croncat_app::{CronCat, CronCatInterface};
+/// Helper to attach funds for creation or refilling a task
+fn task_creation_assets(config: &Config) -> AssetListUnchecked {
+    AssetList::from(vec![Asset::native(
+        config.native_denom.clone(),
+        config.dca_creation_amount,
+    )])
+    .into()
+}
 
 /// Helper to for task creation message
 fn create_convert_task_internal(
@@ -27,33 +45,31 @@ fn create_convert_task_internal(
     config: Config,
 ) -> AbstractSdkResult<CosmosMsg> {
     let interval = dca.frequency.to_interval();
+    // QUEST #3.1
+    // With the macro from 3.0, we generated an `Into` message that converts our custom message into the top-level message
+    // Use it here to improve the syntax.
+    // Hints: https://docs.abstract.money/4_get_started/3_module_builder.html#execute
+    // https://docs.rs/abstract-core/latest/abstract_core/app/trait.AppExecuteMsg.html#
+    let msg: ExecuteMsg =
+        abstract_core::base::ExecuteMsg::Module(DCAExecuteMsg::Convert { dca_id });
     let task = CronCatTaskRequest {
         interval,
         boundary: None,
-        // TODO?: should it be argument?
         stop_on_fail: true,
         actions: vec![CronCatAction {
-            // #3 remove and explain what is expected
-            msg: wasm_execute(
-                env.contract.address,
-                &ExecuteMsg::from(DCAExecuteMsg::Convert {
-                    dca_id: dca_id.clone(),
-                }),
-                vec![],
-            )?
-            .into(),
+            // Cron cat action that will get scheduled
+            msg: wasm_execute(env.contract.address, &msg, vec![])?.into(),
             gas_limit: Some(300_000),
         }],
         queries: None,
         transforms: None,
         cw20: None,
     };
-    let assets = AssetList::from(vec![Asset::native(
-        config.native_denom,
-        config.dca_creation_amount,
-    )])
-    .into();
-    cron_cat.create_task(task, dca_id, assets)
+    let assets = task_creation_assets(&config);
+    // QUEST #2.3
+    // Generate create task message
+    // Hint: Use Cron Cat Api
+    Ok(CosmosMsg::Custom(cosmwasm_std::Empty {}))
 }
 
 pub fn execute_handler(
@@ -118,15 +134,15 @@ pub fn execute_handler(
 /// Update the configuration of the app
 fn update_config(
     deps: DepsMut,
-    _msg_info: MessageInfo,
+    msg_info: MessageInfo,
     app: DCAApp,
     new_native_denom: Option<String>,
     new_dca_creation_amount: Option<Uint128>,
     new_refill_threshold: Option<Uint128>,
     new_max_spread: Option<Decimal>,
 ) -> AppResult {
+    // QUEST #1
     // Only the admin should be able to call this
-    // #1 
     // Hint: https://docs.rs/abstract-app/0.17.0/abstract_app/state/struct.AppContract.html#
 
     let old_config = CONFIG.load(deps.storage)?;
@@ -158,17 +174,18 @@ fn create_dca(
     // Only the admin should be able to create dca
     app.admin.assert_admin(deps.as_ref(), &info.sender)?;
 
-    let config = CONFIG.load(deps.storage)?;
+    let _config = CONFIG.load(deps.storage)?;
 
-    // Simulate swap first
-    // #2
-    // Using the DEX API
-    // What is an API: https://docs.abstract.money/4_get_started/4_sdk.html
+    // QUEST #2.1
+    // Here we want to validate that a swap can be performed between the two assets.
+    // We can check this by doing a swap simulation using the DEX API
+    // If the simulation fails, we should return an error
+
+    // What is an API: https://docs.abstract.money/4_get_started/4_sdk.html#apis
     // The Dex API: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/adapters/dex/src/api.rs
 
-
     // Generate DCA ID
-    let id = NEXT_ID.update(deps.storage, |id| AppResult::Ok(id + 1))?;
+    let id = NEXT_DCA_ID.update(deps.storage, |id| AppResult::Ok(id + 1))?;
     let dca_id = format!("dca_{id}");
 
     let dca_entry = DCAEntry {
@@ -179,8 +196,11 @@ fn create_dca(
     };
     DCA_LIST.save(deps.storage, dca_id.clone(), &dca_entry)?;
 
-    let cron_cat = app.cron_cat(deps.as_ref());
-    let task_msg = create_convert_task_internal(env, dca_entry, dca_id.clone(), cron_cat, config)?;
+    // QUEST #2.0
+    // Pass on the Cron Cat API: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/apps/croncat/src/api.rs
+    // to generate the cron task message.
+    // Hint: use `create_convert_task_internal`
+    let task_msg = CosmosMsg::Custom(cosmwasm_std::Empty {});
 
     Ok(app.tag_response(
         Response::new()
@@ -215,10 +235,13 @@ fn update_dca(
         dex: new_dex.unwrap_or(old_dca.dex),
     };
 
-    // Simulate swap for a new dca
-    // #2 
-    // app.dex(deps.as_ref(), new_dca.dex.clone())
-    //     .simulate_swap(new_dca.source_asset.clone(), new_dca.target_asset.clone())?;
+    // QUEST #2.2 (same as 2.1)
+    // Here we want to validate that a swap can be performed between the two assets.
+    // We can check this by doing a swap simulation using the DEX API
+    // If the simulation fails, we should return an error
+
+    // What is an API: https://docs.abstract.money/4_get_started/4_sdk.html#apis
+    // The Dex API: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/adapters/dex/src/api.rs
 
     DCA_LIST.save(deps.storage, dca_id.clone(), &new_dca)?;
 
@@ -240,9 +263,10 @@ fn cancel_dca(deps: DepsMut, info: MessageInfo, app: DCAApp, dca_id: String) -> 
 
     DCA_LIST.remove(deps.storage, dca_id.clone());
 
-    // #3
-    let cron_cat = app.cron_cat(deps.as_ref());
-    let remove_task_msg = cron_cat.remove_task(dca_id)?;
+    // QUEST #2.4
+    // Remove task from Cron Cat
+    // Hint: Using the Cron Cat API
+    let remove_task_msg = CosmosMsg::Custom(cosmwasm_std::Empty {});
 
     Ok(app.tag_response(Response::new().add_message(remove_task_msg), "cancel_dca"))
 }
@@ -252,7 +276,6 @@ fn cancel_dca(deps: DepsMut, info: MessageInfo, app: DCAApp, dca_id: String) -> 
 fn convert(deps: DepsMut, env: Env, info: MessageInfo, app: DCAApp, dca_id: String) -> AppResult {
     let config = CONFIG.load(deps.storage)?;
     let dca = DCA_LIST.load(deps.storage, dca_id.clone())?;
-
     let cron_cat = app.cron_cat(deps.as_ref());
 
     let manager_addr = cron_cat.query_manager_addr(env.contract.address.clone(), dca_id.clone())?;
@@ -261,31 +284,17 @@ fn convert(deps: DepsMut, env: Env, info: MessageInfo, app: DCAApp, dca_id: Stri
     }
     let mut messages = vec![];
 
-    // In case task running out of balance - refill it
-    let task_balance = cron_cat
-        .query_task_balance(env.contract.address, dca_id.clone())?
-        .balance
-        .unwrap();
-    if task_balance.native_balance < config.refill_threshold {
-        messages.push(
-            cron_cat.refill_task(
-                dca_id,
-                AssetList::from(vec![Asset::native(
-                    config.native_denom,
-                    config.dca_creation_amount,
-                )])
-                .into(),
-            )?,
-        );
+    let task_balance = cron_cat.query_task_balance(env.contract.address, dca_id.clone())?;
+    if task_balance.balance.unwrap().native_balance < config.refill_threshold {
+        let assets = task_creation_assets(&config);
+        let refill_task_msg = cron_cat.refill_task(dca_id, assets)?;
+        messages.push(refill_task_msg)
     }
 
-    // TODO: remove dca on failed swap?
-    // Or `stop_on_fail` should be enough
-    messages.push(app.dex(deps.as_ref(), dca.dex).swap(
-        dca.source_asset,
-        dca.target_asset,
-        Some(config.max_spread),
-        None,
-    )?);
+    // QUEST #2.5
+    // Finally do the swap!
+    // Hint: Use the Dex API and `dca` value from above
+    let swap_msg = CosmosMsg::Custom(cosmwasm_std::Empty {});
+    messages.push(swap_msg);
     Ok(app.tag_response(Response::new().add_messages(messages), "convert"))
 }
