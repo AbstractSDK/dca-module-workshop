@@ -27,5 +27,8 @@ fn main() -> anyhow::Result<()> {
     // Now that we have our app we want to deploy it. Use the abstract AppDeployer trait to deploy the app.
     // Hint: You already used this trait in the integration tests!
 
+    // After doing this, notice how you didn't have to provide any Abstract-related information to deploy your app! 
+    // This is because cw-orch allows you to ship contract addresses with the interfaces. So an `Abstract::load_from(juno)`
+    // will automatically load the correct contract address for you! 
     Ok(())
 }

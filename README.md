@@ -45,10 +45,18 @@ The [`abstract-sdk`](https://docs.abstract.money/4_get_started/4_sdk.html) allow
 
 Abstract applications have some base functionality that is shared across all applications. This includes the ability to set the `admin` of the application, and the ability to transfer ownership of the application. In this quest we'll see how that effects the entry point messages that the application exposes, which is important to know for interacting with the application.
 
-## Quest 4: Testing the DCA App
+## Quest 4: DCA App Testing Setup
 
-Testing is an important part of building applications. In this quest we'll be writing tests for the DCA application to make sure that it works as expected.
+Testing is an important part of building applications. In this quest you'll deploy the required infrastructure to test the application.
 
 > Testing abstract modules is made easy through the use of [`cw-orchestrator`](https://github.com/AbstractSDK/cw-orchestrator), our flagship dev-tooling product.
 
-## Quest 5: Deploying the DCA App. (bonus)
+## Quest 5: Easily interacting with the DCA App
+
+In order to speed up both deployment and testing of the application, we've created [`cw-orchestrator`](https://github.com/AbstractSDK/cw-orchestrator). In this quest you'll use the auto-generated methods on the app interface to interact with it in a testing environment. The same interactions can be executed on any other CosmWasm-supporting environment!
+
+## Quest 6: Deploying the DCA App. (bonus)
+
+Wow, congrats you got this far!
+
+This task will show you how you can use [`cw-orchestrator`](https://github.com/AbstractSDK/cw-orchestrator) to deploy your application to any testnet or mainnet. You'll need to have some tokens to complete this quest.
