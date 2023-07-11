@@ -1,3 +1,4 @@
+#![allow(unused)]
 use cw_orch::{
     anyhow,
     prelude::{networks::parse_network, DaemonBuilder},
@@ -22,7 +23,9 @@ fn main() -> anyhow::Result<()> {
         .handle(rt.handle())
         .build()?;
     let app = DCAApp::new(DCA_APP_ID, chain);
+    // QUEST #6
+    // Now that we have our app we want to deploy it. Use the abstract AppDeployer trait to deploy the app.
+    // Hint: You already used this trait in the integration tests!
 
-    app.deploy(version)?;
     Ok(())
 }
