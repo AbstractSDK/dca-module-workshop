@@ -38,7 +38,7 @@ struct CronCatAddrs {
 }
 
 #[allow(unused)]
-struct DeployedApps {
+struct DcaAppStack {
     dca_app: DCAApp<Mock>,
     dex_adapter: DexAdapter<Mock>,
     cron_cat_app: CroncatApp<Mock>,
@@ -51,13 +51,14 @@ fn setup() -> anyhow::Result<(
     Mock,
     AbstractAccount<Mock>,
     Abstract<Mock>,
-    DeployedApps,
+    DcaAppStack,
     CronCatAddrs,
 )> {
     // Create a sender
     let sender = Addr::unchecked(ADMIN);
     // Create the mock
     let mut mock = Mock::new(&sender);
+    // Set up croncat
     let cron_cat = set_up_croncat_contracts(None);
     mock.app = Rc::new(RefCell::new(cron_cat.app));
     let cron_cat_addrs = CronCatAddrs {
@@ -151,7 +152,7 @@ fn setup() -> anyhow::Result<(
         vec![coin(50_000_000, DENOM), coin(10_000, EUR)],
     )?;
 
-    let deployed_apps = DeployedApps {
+    let deployed_apps = DcaAppStack {
         dca_app,
         dex_adapter,
         cron_cat_app,
