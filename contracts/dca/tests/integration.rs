@@ -38,7 +38,7 @@ struct CronCatAddrs {
 }
 
 #[allow(unused)]
-struct DeployedApps {
+struct DcaAppStack {
     dca_app: DCAApp<Mock>,
     dex_adapter: DexAdapter<Mock>,
     cron_cat_app: CroncatApp<Mock>,
@@ -51,7 +51,7 @@ fn setup() -> anyhow::Result<(
     Mock,
     AbstractAccount<Mock>,
     Abstract<Mock>,
-    DeployedApps,
+    DcaAppStack,
     CronCatAddrs,
 )> {
     // Create a sender
@@ -70,6 +70,9 @@ fn setup() -> anyhow::Result<(
     // Construct the DCA interface
     let mut dca_app = DCAApp::new(DCA_APP_ID, mock.clone());
 
+    // QUEST #4 You need to deploy the Abstract framework before you can deploy the DCA app.
+    // We made this super easy! Just use the cw-orchestrator `Deploy` trait that we implemented for Abstract.
+    // Fix the test by deploying Wyndex!
     // Deploy Abstract to the mock
     let abstr_deployment = Abstract::deploy_on(mock.clone(), Empty {})?;
     // Deploy wyndex to the mock
@@ -97,7 +100,7 @@ fn setup() -> anyhow::Result<(
         .claim_namespace(1, "croncat".to_string())?;
     cron_cat_app.deploy(croncat_app::contract::CRONCAT_MODULE_VERSION.parse()?)?;
 
-    // Register factory entry
+    // Register factory entry to the Abstract Name Service
     let factory_entry = UncheckedContractEntry::try_from(CRON_CAT_FACTORY.to_owned())?;
     abstr_deployment.ans_host.execute(
         &abstract_core::ans_host::ExecuteMsg::UpdateContractAddresses {
@@ -113,7 +116,7 @@ fn setup() -> anyhow::Result<(
             .create_default_account(GovernanceDetails::Monarchy {
                 monarch: ADMIN.to_string(),
             })?;
-    // Install DEX
+    // Install DEX adapter
     account.manager.install_module(EXCHANGE, &Empty {}, None)?;
     let module_addr = account.manager.module_info(EXCHANGE)?.unwrap().address;
     dex_adapter.set_address(&module_addr);
@@ -166,7 +169,7 @@ fn setup() -> anyhow::Result<(
         vec![coin(50_000_000, DENOM), coin(10_000, EUR)],
     )?;
 
-    let deployed_apps = DeployedApps {
+    let deployed_apps = DcaAppStack {
         dca_app,
         dex_adapter,
         cron_cat_app,
@@ -214,6 +217,7 @@ fn successful_install() -> anyhow::Result<()> {
 fn create_dca_convert() -> anyhow::Result<()> {
     let (mock, account, _abstr, mut apps, croncat_addrs) = setup()?;
 
+    // QUEST #5.0
     // create 2 dcas
     apps.dca_app.create_dca(
         WYNDEX_WITHOUT_CHAIN.to_owned(),
@@ -364,6 +368,8 @@ fn update_dca() -> anyhow::Result<()> {
         .unwrap()
         .task_hash;
 
+    // QUEST #5.1
+    // Update dca
     apps.dca_app.update_dca(
         "dca_1".to_owned(),
         Some(WYNDEX_WITHOUT_CHAIN.into()),

@@ -12,7 +12,7 @@ use crate::contract::{AppResult, DCAApp};
 
 use crate::error::AppError;
 use crate::msg::{DCAExecuteMsg, ExecuteMsg, Frequency};
-use crate::state::{Config, DCAEntry, CONFIG, DCA_LIST, NEXT_ID};
+use crate::state::{Config, DCAEntry, CONFIG, DCA_LIST, NEXT_DCA_ID};
 use abstract_dex_adapter::api::DexInterface;
 use abstract_sdk::AbstractSdkResult;
 use croncat_app::croncat_integration_utils::{CronCatAction, CronCatTaskRequest};
@@ -27,6 +27,8 @@ fn create_convert_task_internal(
     config: Config,
 ) -> AbstractSdkResult<CosmosMsg> {
     let interval = dca.frequency.to_interval();
+    // QUEST #3.1
+    // With the macro from 3.0, we generated an `Into` message that converts our custom message into the top-level message
     let task = CronCatTaskRequest {
         interval,
         boundary: None,
@@ -53,6 +55,8 @@ fn create_convert_task_internal(
         config.dca_creation_amount,
     )])
     .into();
+    // QUEST #2.3
+    // Generate create task message
     cron_cat.create_task(task, dca_id, assets)
 }
 
@@ -125,9 +129,10 @@ fn update_config(
     new_refill_threshold: Option<Uint128>,
     new_max_spread: Option<Decimal>,
 ) -> AppResult {
+    // QUEST #1
     // Only the admin should be able to call this
-    // #1 
     // Hint: https://docs.rs/abstract-app/0.17.0/abstract_app/state/struct.AppContract.html#
+    app.admin.assert_admin(deps.as_ref(), &_msg_info.sender)?;
 
     let old_config = CONFIG.load(deps.storage)?;
 
@@ -158,17 +163,21 @@ fn create_dca(
     // Only the admin should be able to create dca
     app.admin.assert_admin(deps.as_ref(), &info.sender)?;
 
+    // QUEST #2.1
+    // Here we want to validate that a swap can be performed between the two assets.
+    // We can check this by doing a swap simulation using the DEX API
+    // If the simulation fails, we should return an error
     let config = CONFIG.load(deps.storage)?;
 
+    // QUEST #2
     // Simulate swap first
-    // #2
     // Using the DEX API
     // What is an API: https://docs.abstract.money/4_get_started/4_sdk.html
     // The Dex API: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/adapters/dex/src/api.rs
 
 
     // Generate DCA ID
-    let id = NEXT_ID.update(deps.storage, |id| AppResult::Ok(id + 1))?;
+    let id = NEXT_DCA_ID.update(deps.storage, |id| AppResult::Ok(id + 1))?;
     let dca_id = format!("dca_{id}");
 
     let dca_entry = DCAEntry {
@@ -179,6 +188,9 @@ fn create_dca(
     };
     DCA_LIST.save(deps.storage, dca_id.clone(), &dca_entry)?;
 
+    // QUEST #2.0
+    // Pass on the Cron Cat API: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/apps/croncat/src/api.rs
+    // to generate the cron task message.
     let cron_cat = app.cron_cat(deps.as_ref());
     let task_msg = create_convert_task_internal(env, dca_entry, dca_id.clone(), cron_cat, config)?;
 
@@ -215,10 +227,13 @@ fn update_dca(
         dex: new_dex.unwrap_or(old_dca.dex),
     };
 
+    // QUEST #2.2 (same as 2.1)
+    // Here we want to validate that a swap can be performed between the two assets.
+    // We can check this by doing a swap simulation using the DEX API
+    // If the simulation fails, we should return an error
     // Simulate swap for a new dca
-    // #2 
-    // app.dex(deps.as_ref(), new_dca.dex.clone())
-    //     .simulate_swap(new_dca.source_asset.clone(), new_dca.target_asset.clone())?;
+    app.dex(deps.as_ref(), new_dca.dex.clone())
+        .simulate_swap(new_dca.source_asset.clone(), new_dca.target_asset.clone())?;
 
     DCA_LIST.save(deps.storage, dca_id.clone(), &new_dca)?;
 
@@ -238,9 +253,10 @@ fn update_dca(
 fn cancel_dca(deps: DepsMut, info: MessageInfo, app: DCAApp, dca_id: String) -> AppResult {
     app.admin.assert_admin(deps.as_ref(), &info.sender)?;
 
+    // QUEST #2.4
+    // Remove task from Cron Cat
     DCA_LIST.remove(deps.storage, dca_id.clone());
 
-    // #3
     let cron_cat = app.cron_cat(deps.as_ref());
     let remove_task_msg = cron_cat.remove_task(dca_id)?;
 
@@ -279,8 +295,8 @@ fn convert(deps: DepsMut, env: Env, info: MessageInfo, app: DCAApp, dca_id: Stri
         );
     }
 
-    // TODO: remove dca on failed swap?
-    // Or `stop_on_fail` should be enough
+    // QUEST #2.5
+    // Finally do the swap!
     messages.push(app.dex(deps.as_ref(), dca.dex).swap(
         dca.source_asset,
         dca.target_asset,

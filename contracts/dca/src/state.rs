@@ -22,5 +22,5 @@ pub struct DCAEntry {
 }
 
 pub const CONFIG: Item<Config> = Item::new("config");
-pub const NEXT_ID: Item<u64> = Item::new("next_id");
+pub const NEXT_DCA_ID: Item<u64> = Item::new("next_id");
 pub const DCA_LIST: Map<String, DCAEntry> = Map::new("dca_list");

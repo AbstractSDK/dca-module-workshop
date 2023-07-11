@@ -22,6 +22,8 @@ fn main() -> anyhow::Result<()> {
         .handle(rt.handle())
         .build()?;
     let app = DCAApp::new(DCA_APP_ID, chain);
+    // QUEST #6
+    // Now that we have our app we want to deploy it. Use the abstract AppDeployer trait to deploy the app.
 
     app.deploy(version)?;
     Ok(())
