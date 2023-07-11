@@ -172,7 +172,7 @@ fn create_dca(
     // Simulate swap first
     // #2
     // Using the DEX API
-    // What is an API: https://docs.abstract.money/4_get_started/4_sdk.html
+    // What is an API: https://docs.abstract.money/4_get_started/4_sdk.html#apis
     // The Dex API: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/adapters/dex/src/api.rs
 
     // Generate DCA ID
