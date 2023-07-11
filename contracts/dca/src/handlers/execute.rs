@@ -241,8 +241,9 @@ fn update_dca(
         dex: new_dex.unwrap_or(old_dca.dex),
     };
 
-    // Simulate swap for a new dca
-    // QUEST #2 (repeated)
+    // Simulate a swap through the DEX API
+    // see 
+    // #2
 
     DCA_LIST.save(deps.storage, dca_id.clone(), &new_dca)?;
 

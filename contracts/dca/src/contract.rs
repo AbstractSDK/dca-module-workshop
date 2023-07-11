@@ -19,8 +19,9 @@ pub type AppResult<T = Response> = Result<T, AppError>;
 /// The type of the app that is used to build your app and access the Abstract SDK features.
 pub type DCAApp = AppContract<AppError, AppInstantiateMsg, DCAExecuteMsg, DCAQueryMsg, Empty>;
 
-// This module application is dependent on two other modules
-// QUEOST #0
+// #0
+// This module application is dependent on two other modules: the CronCat and the Dex module.
+// Find out how to set the dependency for this module.
 // Hint: https://docs.abstract.money/4_get_started/3_module_builder.html?#dependencies
 const CRONCAT_DEPENDENCY: StaticDependency = StaticDependency::new("", &["^0.0.1"]);
 const DEX_DEPENDENCY: StaticDependency = StaticDependency::new(EXCHANGE, &["^0.17.0"]);
