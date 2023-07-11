@@ -235,7 +235,7 @@ fn update_dca(
         dex: new_dex.unwrap_or(old_dca.dex),
     };
 
-    // QUEST #2.2 (same as create_dca)
+    // QUEST #2.2 (same as 2.1)
     // Here we want to validate that a swap can be performed between the two assets.
     // We can check this by doing a swap simulation using the DEX API
     // If the simulation fails, we should return an error
@@ -278,10 +278,7 @@ fn convert(deps: DepsMut, env: Env, info: MessageInfo, app: DCAApp, dca_id: Stri
     let dca = DCA_LIST.load(deps.storage, dca_id.clone())?;
     let cron_cat = app.cron_cat(deps.as_ref());
 
-    // QUEST #4
-    // Check if this method called by Cron Cat Manager
-    // Hint: Cron Cat API has method to get manager addr
-    let manager_addr = cosmwasm_std::Addr::unchecked("");
+    let manager_addr = cron_cat.query_manager_addr(env.contract.address.clone(), dca_id.clone())?;
     if manager_addr != info.sender {
         return Err(AppError::NotManagerConvert {});
     }
@@ -294,10 +291,9 @@ fn convert(deps: DepsMut, env: Env, info: MessageInfo, app: DCAApp, dca_id: Stri
         messages.push(refill_task_msg)
     }
 
-    // QUEST #5
+    // QUEST #2.5
     // Finally do the swap!
-    // Hint: Using Dex API
-    // After you done - remove allow(unused) to make sure you used everything, and run a test
+    // Hint: Use the Dex API and `dca` value from above
     let swap_msg = CosmosMsg::Custom(cosmwasm_std::Empty {});
     messages.push(swap_msg);
     Ok(app.tag_response(Response::new().add_messages(messages), "convert"))
