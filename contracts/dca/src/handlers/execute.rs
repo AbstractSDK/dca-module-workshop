@@ -1,4 +1,5 @@
 #![allow(clippy::too_many_arguments)]
+#![allow(unused)]
 
 use abstract_core::objects::{AssetEntry, DexName};
 use abstract_dex_adapter::msg::OfferAsset;
@@ -11,19 +12,14 @@ use cw_asset::{Asset, AssetList, AssetListUnchecked};
 use crate::contract::{AppResult, DCAApp};
 
 use crate::error::AppError;
+use crate::msg::{DCAExecuteMsg, ExecuteMsg, Frequency};
 use crate::state::{Config, DCAEntry, CONFIG, DCA_LIST, NEXT_ID};
+use abstract_dex_adapter::api::DexInterface;
 use abstract_sdk::AbstractSdkResult;
 use croncat_app::croncat_integration_utils::{CronCatAction, CronCatTaskRequest};
-
-#[allow(unused)]
-use crate::msg::{DCAExecuteMsg, ExecuteMsg, Frequency};
-#[allow(unused)]
-use abstract_dex_adapter::api::DexInterface;
-#[allow(unused)]
 use croncat_app::{CronCat, CronCatInterface};
 
 /// Helper to attach funds for creation or refilling a task
-#[allow(unused)]
 fn task_creation_assets(config: &Config) -> AssetListUnchecked {
     AssetList::from(vec![Asset::native(
         config.native_denom.clone(),
@@ -33,16 +29,15 @@ fn task_creation_assets(config: &Config) -> AssetListUnchecked {
 }
 
 /// Helper to for task creation message
-#[allow(unused)]
 fn create_convert_task_internal(
-    _env: Env,
+    env: Env,
     dca: DCAEntry,
-    _dca_id: String,
-    _cron_cat: CronCat<DCAApp>,
+    dca_id: String,
+    cron_cat: CronCat<DCAApp>,
     config: Config,
 ) -> AbstractSdkResult<CosmosMsg> {
     let interval = dca.frequency.to_interval();
-    let _task = CronCatTaskRequest {
+    let task = CronCatTaskRequest {
         interval,
         boundary: None,
         stop_on_fail: true,
@@ -63,7 +58,7 @@ fn create_convert_task_internal(
         transforms: None,
         cw20: None,
     };
-    let _assets = task_creation_assets(&config);
+    let assets = task_creation_assets(&config);
     // Generate create task message
     // # 3.2
     // Hint: Use Cron Cat Api
@@ -132,7 +127,7 @@ pub fn execute_handler(
 /// Update the configuration of the app
 fn update_config(
     deps: DepsMut,
-    _msg_info: MessageInfo,
+    msg_info: MessageInfo,
     app: DCAApp,
     new_native_denom: Option<String>,
     new_dca_creation_amount: Option<Uint128>,
@@ -161,7 +156,7 @@ fn update_config(
 /// Create new DCA
 fn create_dca(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     app: DCAApp,
     source_asset: OfferAsset,
@@ -195,7 +190,7 @@ fn create_dca(
     // Generate task message
     // #3
     // Hint: use one of the helpers
-    // And you gonna need the Cron Cat API: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/apps/croncat/src/api.rs
+    // And you are going to need the Cron Cat API: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/apps/croncat/src/api.rs
     let task_msg = CosmosMsg::Custom(cosmwasm_std::Empty {});
 
     Ok(app.tag_response(
@@ -209,7 +204,7 @@ fn create_dca(
 /// Update existing dca
 fn update_dca(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     app: DCAApp,
     dca_id: String,
@@ -267,7 +262,7 @@ fn cancel_dca(deps: DepsMut, info: MessageInfo, app: DCAApp, dca_id: String) -> 
 /// Refill task if needed
 fn convert(deps: DepsMut, _env: Env, info: MessageInfo, app: DCAApp, dca_id: String) -> AppResult {
     let config = CONFIG.load(deps.storage)?;
-    let _dca = DCA_LIST.load(deps.storage, dca_id.clone())?;
+    let dca = DCA_LIST.load(deps.storage, dca_id.clone())?;
 
     // Check if this method called by Cron Cat Manager
     // #4
@@ -282,10 +277,11 @@ fn convert(deps: DepsMut, _env: Env, info: MessageInfo, app: DCAApp, dca_id: Str
     // #5
     // If task balance is below config threshold - refill it
     // Hint: You can get task balance and refill using Cron Cat API :)
-    // Don't be shy to unwrap here, since this method is called 
+    // Don't be shy to unwrap here, since this method is called
     // by Cron Cat of this DCA task and it is not possible that there is no balance!
     let task_balance = Uint128::new(1);
     if task_balance < config.refill_threshold {
+        let assets = task_creation_assets(&config);
         let refill_task_msg = CosmosMsg::Custom(cosmwasm_std::Empty {});
         messages.push(refill_task_msg)
     }
@@ -293,7 +289,7 @@ fn convert(deps: DepsMut, _env: Env, info: MessageInfo, app: DCAApp, dca_id: Str
     // Finally do the swap!
     // #6
     // Hint: Using Dex API
-    // After you done - remove allow(unused) parts and underscores to make sure you used everything!
+    // After you done - remove allow(unused) to make sure you used everything, and run a test
     messages.push(CosmosMsg::Custom(cosmwasm_std::Empty {}));
     Ok(app.tag_response(Response::new().add_messages(messages), "convert"))
 }
