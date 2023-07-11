@@ -29,6 +29,8 @@ fn create_convert_task_internal(
     config: Config,
 ) -> AbstractSdkResult<CosmosMsg> {
     let interval = dca.frequency.to_interval();
+    // QUEST #3.1
+    // With the macro from 3.0, we generated an `Into` message that converts our custom message into the top-level message
     let task = CronCatTaskRequest {
         interval,
         boundary: None,
@@ -52,6 +54,8 @@ fn create_convert_task_internal(
         config.dca_creation_amount,
     )])
     .into();
+    // QUEST #2.3
+    // Generate create task message
     cron_cat.create_task(task, dca_id, assets)
 }
 
@@ -124,8 +128,11 @@ fn update_config(
     new_refill_threshold: Option<Uint128>,
     new_max_spread: Option<Decimal>,
 ) -> AppResult {
+    // QUEST #1
     // Only the admin should be able to call this
+    // Hint: https://docs.rs/abstract-app/0.17.0/abstract_app/state/struct.AppContract.html#
     app.admin.assert_admin(deps.as_ref(), &msg_info.sender)?;
+
     let old_config = CONFIG.load(deps.storage)?;
     let new_native_denom = new_native_asset
         .map(|asset| {
@@ -165,15 +172,22 @@ fn create_dca(
     // Only the admin should be able to create dca
     app.admin.assert_admin(deps.as_ref(), &info.sender)?;
 
+    // QUEST #2.1
+    // Here we want to validate that a swap can be performed between the two assets.
+    // We can check this by doing a swap simulation using the DEX API
+    // If the simulation fails, we should return an error
     let config = CONFIG.load(deps.storage)?;
 
-    // Simulate swap first
+    // QUEST #2
+    // Simulate swap using the DEX API to ensure that it can be done
+    // What is an API: https://docs.abstract.money/4_get_started/4_sdk.html
+    // The Dex API: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/adapters/dex/src/api.rs
     app.ans_dex(deps.as_ref(), dex_name.clone())
         .simulate_swap(source_asset.clone(), target_asset.clone())?;
 
     // Generate DCA ID
     let dca_id = NEXT_ID.update(deps.storage, |id| AppResult::Ok(id.next_id()))?;
-
+    
     let dca_entry = DCAEntry {
         source_asset,
         target_asset,
@@ -182,6 +196,9 @@ fn create_dca(
     };
     DCA_LIST.save(deps.storage, dca_id, &dca_entry)?;
 
+    // QUEST #2.0
+    // Pass on the Cron Cat API: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/apps/croncat/src/api.rs
+    // to generate the cron task message.
     let cron_cat = app.cron_cat(deps.as_ref());
     let task_msg = create_convert_task_internal(env, dca_entry, dca_id, cron_cat, config)?;
 
@@ -216,6 +233,10 @@ fn update_dca(
         dex: new_dex.unwrap_or(old_dca.dex),
     };
 
+    // QUEST #2.2 (same as 2.1)
+    // Here we want to validate that a swap can be performed between the two assets.
+    // We can check this by doing a swap simulation using the DEX API
+    // If the simulation fails, we should return an error
     // Simulate swap for a new dca
     app.ans_dex(deps.as_ref(), new_dca.dex.clone())
         .simulate_swap(new_dca.source_asset.clone(), new_dca.target_asset.clone())?;
@@ -239,7 +260,9 @@ fn update_dca(
 fn cancel_dca(deps: DepsMut, info: MessageInfo, app: DCAApp, dca_id: DCAId) -> AppResult {
     app.admin.assert_admin(deps.as_ref(), &info.sender)?;
 
-    DCA_LIST.remove(deps.storage, dca_id);
+    // QUEST #2.4
+    // Remove task from Cron Cat
+    DCA_LIST.remove(deps.storage, dca_id.clone());
 
     let cron_cat = app.cron_cat(deps.as_ref());
     let remove_task_msg = cron_cat.remove_task(dca_id)?;
@@ -280,8 +303,8 @@ fn convert(deps: DepsMut, env: Env, info: MessageInfo, app: DCAApp, dca_id: DCAI
         );
     }
 
-    // TODO: remove dca on failed swap?
-    // Or `stop_on_fail` should be enough
+    // QUEST #2.5
+    // Finally do the swap!
     messages.push(app.ans_dex(deps.as_ref(), dca.dex).swap(
         dca.source_asset,
         dca.target_asset,
