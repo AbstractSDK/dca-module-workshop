@@ -21,6 +21,9 @@ pub struct DCAEntry {
     pub dex: DexName,
 }
 
+/// App configuration
 pub const CONFIG: Item<Config> = Item::new("config");
-pub const NEXT_ID: Item<u64> = Item::new("next_id");
+/// The next id in sequence for the dcas
+pub const NEXT_DCA_ID: Item<u64> = Item::new("next_id");
+/// Mapping of dca ids to their entries
 pub const DCA_LIST: Map<String, DCAEntry> = Map::new("dca_list");

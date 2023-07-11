@@ -20,7 +20,7 @@ pub type AppResult<T = Response> = Result<T, AppError>;
 pub type DCAApp = AppContract<AppError, AppInstantiateMsg, DCAExecuteMsg, DCAQueryMsg, Empty>;
 
 // This module application is dependent on two other modules
-// #0
+// QUEOST #0
 // Hint: https://docs.abstract.money/4_get_started/3_module_builder.html?#dependencies
 const CRONCAT_DEPENDENCY: StaticDependency = StaticDependency::new("", &["^0.0.1"]);
 const DEX_DEPENDENCY: StaticDependency = StaticDependency::new(EXCHANGE, &["^0.17.0"]);
