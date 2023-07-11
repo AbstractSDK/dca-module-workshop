@@ -9,17 +9,15 @@ use crate::{
     state::{Config, DCAEntry},
 };
 
-// This is used for type safety
-// The second part is used to indicate the messages are used as the apps messages
-// This is equivalent to
-// pub type InstantiateMsg = <App as abstract_sdk::base::InstantiateEndpoint>::InstantiateMsg;
-// pub type ExecuteMsg = <App as abstract_sdk::base::ExecuteEndpoint>::ExecuteMsg;
-// pub type QueryMsg = <App as abstract_sdk::base::QueryEndpoint>::QueryMsg;
-// pub type MigrateMsg = <App as abstract_sdk::base::MigrateEndpoint>::MigrateMsg;
-
-// impl app::AppExecuteMsg for DCAExecuteMsg {}
-// impl app::AppQueryMsg for DCAQueryMsg {}
-abstract_app::app_msg_types!(DCAApp, DCAExecuteMsg, DCAQueryMsg);
+// QUEST #3.0
+// Replace this boilerplate with a simple macro call
+// Hint: https://docs.rs/abstract-app/latest/abstract_app/macro.app_msg_types.html
+pub type InstantiateMsg = <DCAApp as abstract_sdk::base::InstantiateEndpoint>::InstantiateMsg;
+pub type ExecuteMsg = <DCAApp as abstract_sdk::base::ExecuteEndpoint>::ExecuteMsg;
+pub type QueryMsg = <DCAApp as abstract_sdk::base::QueryEndpoint>::QueryMsg;
+pub type MigrateMsg = <DCAApp as abstract_sdk::base::MigrateEndpoint>::MigrateMsg;
+impl abstract_core::app::AppExecuteMsg for DCAExecuteMsg {}
+impl abstract_core::app::AppQueryMsg for DCAQueryMsg {}
 
 #[cosmwasm_schema::cw_serde]
 #[non_exhaustive]

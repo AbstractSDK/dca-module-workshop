@@ -16,8 +16,10 @@ pub const DCA_APP_ID: &str = "abstract:dca";
 /// The type of the result returned by your app's entry points.
 pub type AppResult<T = Response> = Result<T, AppError>;
 
-/// The type of the app that is used to build your app and access the Abstract SDK features.
-pub type DCAApp = AppContract<AppError, AppInstantiateMsg, DCAExecuteMsg, DCAQueryMsg, Empty>;
+/// QUEST #3.2
+/// The custom instantiate message is set to `Empty` but we want to set some state on instantiation.
+/// Replace it with our custom instantiate message type.
+pub type DCAApp = AppContract<AppError, Empty, DCAExecuteMsg, DCAQueryMsg, Empty>;
 
 // #0
 // This module application is dependent on two other modules: the CronCat and the Dex module.

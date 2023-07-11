@@ -39,4 +39,16 @@ Each application has an `admin` that is able to perform administrative actions o
 
 ## Quest 2: Abstract SDK composable APIs
 
-The [`abstract-sdk`]() allows developers to create APIs for their modules. These APIs allow users of that module to interact with it in an intuitive way. In this quest we'll be using the Dex and CronCat APIs to perform token swaps and schedule recurring transactions.
+The [`abstract-sdk`](https://docs.abstract.money/4_get_started/4_sdk.html) allows developers to create APIs for their modules. These APIs allow users (contracts) of that module to interact with it in an intuitive way. In this quest we'll be using the Dex and CronCat APIs to set up token swaps and schedule recurring transactions.
+
+## Quest 3: Module Message Types
+
+Abstract applications have some base functionality that is shared across all applications. This includes the ability to set the `admin` of the application, and the ability to transfer ownership of the application. In this quest we'll see how that effects the entry point messages that the application exposes, which is important to know for interacting with the application.
+
+## Quest 4: Testing the DCA App
+
+Testing is an important part of building applications. In this quest we'll be writing tests for the DCA application to make sure that it works as expected.
+
+> Testing abstract modules is made easy through the use of [`cw-orchestrator`](https://github.com/AbstractSDK/cw-orchestrator), our flagship dev-tooling product.
+
+## Quest 5: Deploying the DCA App. (bonus)

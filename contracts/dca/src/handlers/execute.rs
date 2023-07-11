@@ -3,18 +3,12 @@
 
 use abstract_core::{
     adapter::AdapterRequestMsg,
-    objects::{AssetEntry, DexName}
+    objects::{AssetEntry, DexName},
 };
-use abstract_dex_adapter::{
-    msg::OfferAsset,
-    api::DexInterface
-};
+use abstract_dex_adapter::{api::DexInterface, msg::OfferAsset};
 use abstract_sdk::{
-    base::ExecuteEndpoint,
-    features::AbstractResponse,
-    AbstractSdkResult,
-    AppInterface,
-    ModuleInterface
+    base::ExecuteEndpoint, features::AbstractResponse, AbstractSdkResult, AppInterface,
+    ModuleInterface,
 };
 use cosmwasm_std::{
     wasm_execute, CosmosMsg, Decimal, DepsMut, Env, MessageInfo, Response, Uint128,
@@ -22,8 +16,7 @@ use cosmwasm_std::{
 use croncat_app::{
     contract::CRONCAT_ID,
     croncat_integration_utils::{CronCatAction, CronCatTaskRequest},
-    CronCat,
-    CronCatInterface
+    CronCat, CronCatInterface,
 };
 use cw_asset::{Asset, AssetList, AssetListUnchecked};
 
@@ -31,7 +24,7 @@ use crate::{
     contract::{AppResult, DCAApp},
     error::AppError,
     msg::{DCAExecuteMsg, ExecuteMsg, Frequency},
-    state::{Config, DCAEntry, CONFIG, DCA_LIST, NEXT_DCA_ID}
+    state::{Config, DCAEntry, CONFIG, DCA_LIST, NEXT_DCA_ID},
 };
 
 /// Helper to attach funds for creation or refilling a task
@@ -53,11 +46,10 @@ fn create_convert_task_internal(
 ) -> AbstractSdkResult<CosmosMsg> {
     let interval = dca.frequency.to_interval();
     // QUEST #3.1
-    // Message that will be executed
-    // Remove boilerplate
+    // With the macro from 3.0, we generated an `Into` message that converts our custom message into the top-level message
+    // Use it here to improve the syntax.
     // Hints: https://docs.abstract.money/4_get_started/3_module_builder.html#execute
     // https://docs.rs/abstract-core/latest/abstract_core/app/trait.AppExecuteMsg.html#
-    // https://docs.rs/abstract-app/latest/abstract_app/macro.app_msg_types.html
     let msg: ExecuteMsg =
         abstract_core::base::ExecuteMsg::Module(DCAExecuteMsg::Convert { dca_id });
     let task = CronCatTaskRequest {
@@ -74,7 +66,7 @@ fn create_convert_task_internal(
         cw20: None,
     };
     let assets = task_creation_assets(&config);
-    // QUEST # 3.2
+    // QUEST #2.3
     // Generate create task message
     // Hint: Use Cron Cat Api
     Ok(CosmosMsg::Custom(cosmwasm_std::Empty {}))
@@ -184,9 +176,11 @@ fn create_dca(
 
     let _config = CONFIG.load(deps.storage)?;
 
-    // QUEST #2
-    // Simulate swap first
-    // Using the DEX API
+    // QUEST #2.1
+    // Here we want to validate that a swap can be performed between the two assets.
+    // We can check this by doing a swap simulation using the DEX API
+    // If the simulation fails, we should return an error
+
     // What is an API: https://docs.abstract.money/4_get_started/4_sdk.html#apis
     // The Dex API: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/adapters/dex/src/api.rs
 
@@ -202,10 +196,10 @@ fn create_dca(
     };
     DCA_LIST.save(deps.storage, dca_id.clone(), &dca_entry)?;
 
-    // QUEST #3
-    // Generate task message
-    // Hint: use one of the helpers
-    // And you are going to need the Cron Cat API: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/apps/croncat/src/api.rs
+    // QUEST #2.0
+    // Pass on the Cron Cat API: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/apps/croncat/src/api.rs
+    // to generate the cron task message.
+    // Hint: use `create_convert_task_internal`
     let task_msg = CosmosMsg::Custom(cosmwasm_std::Empty {});
 
     Ok(app.tag_response(
@@ -241,18 +235,21 @@ fn update_dca(
         dex: new_dex.unwrap_or(old_dca.dex),
     };
 
-    // Simulate a swap through the DEX API
-    // see 
-    // #2
+    // QUEST #2.2 (same as create_dca)
+    // Here we want to validate that a swap can be performed between the two assets.
+    // We can check this by doing a swap simulation using the DEX API
+    // If the simulation fails, we should return an error
+
+    // What is an API: https://docs.abstract.money/4_get_started/4_sdk.html#apis
+    // The Dex API: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/adapters/dex/src/api.rs
 
     DCA_LIST.save(deps.storage, dca_id.clone(), &new_dca)?;
 
     let response = if recreate_task {
-        // QUEST #3.4
-        // Remove and create task!
-        // Hint: using Cron Cat API
-        let remove_task_msg = CosmosMsg::Custom(cosmwasm_std::Empty {});
-        let create_task_msg = CosmosMsg::Custom(cosmwasm_std::Empty {});
+        let config = CONFIG.load(deps.storage)?;
+        let cron_cat = app.cron_cat(deps.as_ref());
+        let remove_task_msg = cron_cat.remove_task(dca_id.clone())?;
+        let create_task_msg = create_convert_task_internal(env, new_dca, dca_id, cron_cat, config)?;
         Response::new().add_messages(vec![remove_task_msg, create_task_msg])
     } else {
         Response::new()
@@ -266,7 +263,7 @@ fn cancel_dca(deps: DepsMut, info: MessageInfo, app: DCAApp, dca_id: String) -> 
 
     DCA_LIST.remove(deps.storage, dca_id.clone());
 
-    // QUEST #3.3
+    // QUEST #2.4
     // Remove task from Cron Cat
     // Hint: Using the Cron Cat API
     let remove_task_msg = CosmosMsg::Custom(cosmwasm_std::Empty {});

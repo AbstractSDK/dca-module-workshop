@@ -6,6 +6,7 @@ use cw_storage_plus::{Item, Map};
 use crate::msg::Frequency;
 
 #[cosmwasm_schema::cw_serde]
+#[derive(Default)]
 pub struct Config {
     pub native_denom: String,
     pub dca_creation_amount: Uint128,
