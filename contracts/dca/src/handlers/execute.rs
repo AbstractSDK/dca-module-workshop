@@ -47,7 +47,8 @@ fn create_convert_task_internal(
             msg: wasm_execute(
                 // We want croncat to call this dca contract and execute specific method
                 "",
-                // Note: ExecuteMsg::from(DCAExecuteMsg),
+                // Note: ExecuteMsg::from(DCAExecuteMsg)
+                // More info: https://docs.abstract.money/4_get_started/3_module_builder.html#execute
                 &cosmwasm_std::Empty {},
                 vec![],
             )?
