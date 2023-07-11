@@ -97,7 +97,7 @@ fn setup() -> anyhow::Result<(
         .claim_namespace(1, "croncat".to_string())?;
     cron_cat_app.deploy(croncat_app::contract::CRONCAT_MODULE_VERSION.parse()?)?;
 
-    // Register factory entry
+    // Register factory entry to the Abstract Name Service
     let factory_entry = UncheckedContractEntry::try_from(CRON_CAT_FACTORY.to_owned())?;
     abstr_deployment.ans_host.execute(
         &abstract_core::ans_host::ExecuteMsg::UpdateContractAddresses {
@@ -113,50 +113,35 @@ fn setup() -> anyhow::Result<(
             .create_default_account(GovernanceDetails::Monarchy {
                 monarch: ADMIN.to_string(),
             })?;
-    // Install DEX
+    // Install DEX adapter
     account.manager.install_module(EXCHANGE, &Empty {}, None)?;
-    let module_addr = account.manager.module_info(EXCHANGE)?.unwrap().address;
-    dex_adapter.set_address(&module_addr);
 
-    // Install croncat
-    account.install_module(
-        CRONCAT_ID,
-        &croncat_app::msg::InstantiateMsg {
-            base: BaseInstantiateMsg {
-                ans_host_address: abstr_deployment.ans_host.addr_str()?,
-            },
-            module: croncat_app::msg::AppInstantiateMsg {},
-        },
+    // Install croncat app
+    account.install_app(
+        cron_cat_app.clone(),
+        &croncat_app::msg::AppInstantiateMsg {},
         None,
     )?;
-    let module_addr = account.manager.module_info(CRONCAT_ID)?.unwrap().address;
-    cron_cat_app.set_address(&module_addr);
+
     let manager_addr = account.manager.address()?;
     cron_cat_app.set_sender(&manager_addr);
 
     // Install DCA
     dca_app.deploy(DCA_APP_VERSION.parse()?)?;
-    account.install_module(
-        DCA_APP_ID,
-        &InstantiateMsg {
-            base: BaseInstantiateMsg {
-                ans_host_address: abstr_deployment.ans_host.addr_str()?,
-            },
-            module: AppInstantiateMsg {
-                native_denom: DENOM.to_owned(),
-                dca_creation_amount: Uint128::new(5_000_000),
-                refill_threshold: Uint128::new(1_000_000),
-                max_spread: Decimal::percent(30),
-            },
+    account.install_app(
+        dca_app.clone(),
+        &AppInstantiateMsg {
+            native_denom: DENOM.to_owned(),
+            dca_creation_amount: Uint128::new(5_000_000),
+            refill_threshold: Uint128::new(1_000_000),
+            max_spread: Decimal::percent(30),
         },
         None,
     )?;
 
-    let module_addr = account.manager.module_info(DCA_APP_ID)?.unwrap().address;
-    dca_app.set_address(&module_addr);
     account.manager.update_adapter_authorized_addresses(
         EXCHANGE,
-        vec![module_addr.to_string()],
+        vec![dca_app.addr_str()?],
         vec![],
     )?;
 
