@@ -17,8 +17,8 @@ use crate::{
 // pub type QueryMsg = <App as abstract_sdk::base::QueryEndpoint>::QueryMsg;
 // pub type MigrateMsg = <App as abstract_sdk::base::MigrateEndpoint>::MigrateMsg;
 
-// impl app::AppExecuteMsg for AppExecuteMsg {}
-// impl app::AppQueryMsg for AppQueryMsg {}
+// impl app::AppExecuteMsg for DCAExecuteMsg {}
+// impl app::AppQueryMsg for DCAQueryMsg {}
 abstract_app::app_msg_types!(DCAApp, DCAExecuteMsg, DCAQueryMsg);
 
 #[cosmwasm_schema::cw_serde]

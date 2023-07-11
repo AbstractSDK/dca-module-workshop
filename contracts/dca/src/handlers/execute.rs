@@ -1,12 +1,15 @@
 #![allow(clippy::too_many_arguments)]
 #![allow(unused)]
 
+use abstract_core::adapter::AdapterRequestMsg;
 use abstract_core::objects::{AssetEntry, DexName};
 use abstract_dex_adapter::msg::OfferAsset;
+use abstract_sdk::base::ExecuteEndpoint;
 use abstract_sdk::features::AbstractResponse;
 use cosmwasm_std::{
     wasm_execute, CosmosMsg, Decimal, DepsMut, Env, MessageInfo, Response, Uint128,
 };
+use croncat_app::contract::CRONCAT_ID;
 use cw_asset::{Asset, AssetList, AssetListUnchecked};
 
 use crate::contract::{AppResult, DCAApp};
@@ -15,7 +18,7 @@ use crate::error::AppError;
 use crate::msg::{DCAExecuteMsg, ExecuteMsg, Frequency};
 use crate::state::{Config, DCAEntry, CONFIG, DCA_LIST, NEXT_ID};
 use abstract_dex_adapter::api::DexInterface;
-use abstract_sdk::AbstractSdkResult;
+use abstract_sdk::{AbstractSdkResult, AppInterface, ModuleInterface};
 use croncat_app::croncat_integration_utils::{CronCatAction, CronCatTaskRequest};
 use croncat_app::{CronCat, CronCatInterface};
 
@@ -37,22 +40,21 @@ fn create_convert_task_internal(
     config: Config,
 ) -> AbstractSdkResult<CosmosMsg> {
     let interval = dca.frequency.to_interval();
+    // Message that will be executed
+    // #3.1
+    // Remove boilerplate
+    // Hints: https://docs.abstract.money/4_get_started/3_module_builder.html#execute
+    // https://docs.rs/abstract-core/latest/abstract_core/app/trait.AppExecuteMsg.html#
+    // https://docs.rs/abstract-app/latest/abstract_app/macro.app_msg_types.html
+    let msg: ExecuteMsg =
+        abstract_core::base::ExecuteMsg::Module(DCAExecuteMsg::Convert { dca_id });
     let task = CronCatTaskRequest {
         interval,
         boundary: None,
         stop_on_fail: true,
         actions: vec![CronCatAction {
             // Cron cat action that will get scheduled
-            // #3.1
-            msg: wasm_execute(
-                // We want croncat to call this dca contract and execute specific method
-                "",
-                // Note: ExecuteMsg::from(DCAExecuteMsg)
-                // More info: https://docs.abstract.money/4_get_started/3_module_builder.html#execute
-                &cosmwasm_std::Empty {},
-                vec![],
-            )?
-            .into(),
+            msg: wasm_execute(env.contract.address, &msg, vec![])?.into(),
             gas_limit: Some(300_000),
         }],
         queries: None,
