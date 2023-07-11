@@ -261,9 +261,10 @@ fn cancel_dca(deps: DepsMut, info: MessageInfo, app: DCAApp, dca_id: String) -> 
 
 /// Execute swap if called my croncat manager
 /// Refill task if needed
-fn convert(deps: DepsMut, _env: Env, info: MessageInfo, app: DCAApp, dca_id: String) -> AppResult {
+fn convert(deps: DepsMut, env: Env, info: MessageInfo, app: DCAApp, dca_id: String) -> AppResult {
     let config = CONFIG.load(deps.storage)?;
     let dca = DCA_LIST.load(deps.storage, dca_id.clone())?;
+    let cron_cat = app.cron_cat(deps.as_ref());
 
     // Check if this method called by Cron Cat Manager
     // #4
@@ -274,23 +275,18 @@ fn convert(deps: DepsMut, _env: Env, info: MessageInfo, app: DCAApp, dca_id: Str
     }
     let mut messages = vec![];
 
-    // In case task running out of balance - refill it
-    // #5
-    // If task balance is below config threshold - refill it
-    // Hint: You can get task balance and refill using Cron Cat API :)
-    // Don't be shy to unwrap here, since this method is called
-    // by Cron Cat of this DCA task and it is not possible that there is no balance!
-    let task_balance = Uint128::new(1);
-    if task_balance < config.refill_threshold {
+    let task_balance = cron_cat.query_task_balance(env.contract.address, dca_id.clone())?;
+    if task_balance.balance.unwrap().native_balance < config.refill_threshold {
         let assets = task_creation_assets(&config);
-        let refill_task_msg = CosmosMsg::Custom(cosmwasm_std::Empty {});
+        let refill_task_msg = cron_cat.refill_task(dca_id, assets)?;
         messages.push(refill_task_msg)
     }
 
     // Finally do the swap!
-    // #6
+    // #5
     // Hint: Using Dex API
     // After you done - remove allow(unused) to make sure you used everything, and run a test
-    messages.push(CosmosMsg::Custom(cosmwasm_std::Empty {}));
+    let swap_msg = CosmosMsg::Custom(cosmwasm_std::Empty {});
+    messages.push(swap_msg);
     Ok(app.tag_response(Response::new().add_messages(messages), "convert"))
 }
