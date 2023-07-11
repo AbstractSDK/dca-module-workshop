@@ -1,3 +1,4 @@
+#![allow(unused)]
 use crate::{
     error::AppError,
     handlers,

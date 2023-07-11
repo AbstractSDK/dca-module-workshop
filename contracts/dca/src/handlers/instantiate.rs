@@ -1,3 +1,4 @@
+#![allow(unused)]
 use cosmwasm_std::{DepsMut, Empty, Env, MessageInfo, Response};
 
 use crate::contract::{AppResult, DCAApp};
