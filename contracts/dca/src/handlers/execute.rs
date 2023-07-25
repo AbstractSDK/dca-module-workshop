@@ -181,8 +181,8 @@ fn create_dca(
     // We can check this by doing a swap simulation using the DEX Adapter
     // If the simulation fails, we should return an error
 
-    // What is an API: https://docs.abstract.money/4_get_started/4_sdk.html#apis
-    // The DEX Adapter: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/adapters/dex/src/api.rs
+    // What is an SDK API: https://docs.abstract.money/4_get_started/4_sdk.html#apis
+    // The DEX Adapter API: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/adapters/dex/src/api.rs
 
     // Generate DCA ID
     let id = NEXT_DCA_ID.update(deps.storage, |id| AppResult::Ok(id + 1))?;
@@ -240,8 +240,8 @@ fn update_dca(
     // We can check this by doing a swap simulation using the DEX Adapter
     // If the simulation fails, we should return an error
 
-    // What is an API: https://docs.abstract.money/4_get_started/4_sdk.html#apis
-    // The DEX Adapter: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/adapters/dex/src/api.rs
+    // What is an SDK API: https://docs.abstract.money/4_get_started/4_sdk.html#apis
+    // The DEX Adapter API: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/adapters/dex/src/api.rs
 
     DCA_LIST.save(deps.storage, dca_id.clone(), &new_dca)?;
 
