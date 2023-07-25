@@ -1,7 +1,7 @@
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 
 use crate::contract::{AppResult, DCAApp};
-use crate::msg::AppInstantiateMsg;
+use crate::msg::DCAInstantiateMsg;
 use crate::state::{Config, CONFIG, NEXT_DCA_ID};
 
 pub fn instantiate_handler(
@@ -11,7 +11,7 @@ pub fn instantiate_handler(
     _app: DCAApp,
     // QUEST #3.3
     // Replace this with the custom instantiate message type and set the `Config` object with it.
-    msg: AppInstantiateMsg,
+    msg: DCAInstantiateMsg,
 ) -> AppResult {
     let config: Config = Config {
         native_denom: msg.native_denom,

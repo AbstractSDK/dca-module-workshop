@@ -165,15 +165,17 @@ fn create_dca(
 
     // QUEST #2.1
     // Here we want to validate that a swap can be performed between the two assets.
-    // We can check this by doing a swap simulation using the DEX API
+    // We can check this by doing a swap simulation using the DEX Adapter
     // If the simulation fails, we should return an error
     let config = CONFIG.load(deps.storage)?;
 
     // QUEST #2
     // Simulate swap first
-    // Using the DEX API
-    // What is an API: https://docs.abstract.money/4_get_started/4_sdk.html
-    // The Dex API: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/adapters/dex/src/api.rs
+    // Using the DEX adapter
+    // What is an adapter: https://docs.abstract.money/4_get_started/4_sdk.html
+    // The Dex Adapter: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/adapters/dex/src/api.rs
+    let dex = app.dex(deps.as_ref(), dex_name.clone().into());
+    dex.simulate_swap(source_asset.clone(), target_asset.clone())?;
 
 
     // Generate DCA ID
@@ -229,7 +231,7 @@ fn update_dca(
 
     // QUEST #2.2 (same as 2.1)
     // Here we want to validate that a swap can be performed between the two assets.
-    // We can check this by doing a swap simulation using the DEX API
+    // We can check this by doing a swap simulation using the DEX Adapter
     // If the simulation fails, we should return an error
     // Simulate swap for a new dca
     app.dex(deps.as_ref(), new_dca.dex.clone())

@@ -42,7 +42,7 @@ impl Frequency {
 }
 /// App instantiate message
 #[cosmwasm_schema::cw_serde]
-pub struct AppInstantiateMsg {
+pub struct DCAInstantiateMsg {
     /// Native denom for this chain
     pub native_denom: String,
     /// Amount in native coins for creation dca task and refill amount

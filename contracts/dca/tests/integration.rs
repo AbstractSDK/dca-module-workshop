@@ -10,7 +10,7 @@ use abstract_dca_app::msg::{DCAResponse, Frequency};
 use abstract_dca_app::state::{Config, DCAEntry};
 use abstract_dca_app::{
     contract::{DCA_APP_ID, DCA_APP_VERSION},
-    msg::{AppInstantiateMsg, ConfigResponse, InstantiateMsg},
+    msg::{DCAInstantiateMsg, ConfigResponse, InstantiateMsg},
     *,
 };
 use abstract_dex_adapter::interface::DexAdapter;
@@ -145,7 +145,7 @@ fn setup() -> anyhow::Result<(
             base: BaseInstantiateMsg {
                 ans_host_address: abstr_deployment.ans_host.addr_str()?,
             },
-            module: AppInstantiateMsg {
+            module: DCAInstantiateMsg {
                 native_denom: DENOM.to_owned(),
                 dca_creation_amount: Uint128::new(5_000_000),
                 refill_threshold: Uint128::new(1_000_000),

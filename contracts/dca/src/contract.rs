@@ -1,7 +1,7 @@
 use crate::{
     error::AppError,
     handlers,
-    msg::{AppInstantiateMsg, DCAExecuteMsg, DCAQueryMsg},
+    msg::{DCAInstantiateMsg, DCAExecuteMsg, DCAQueryMsg},
 };
 use abstract_app::AppContract;
 use abstract_core::objects::dependency::StaticDependency;
@@ -21,7 +21,7 @@ pub type AppResult<T = Response> = Result<T, AppError>;
 /// Replace it with our custom instantiate message type.
 /// The type of the app that is used to build your app and access the Abstract SDK features.
 pub type DCAApp =
-    AppContract<AppError, AppInstantiateMsg, DCAExecuteMsg, DCAQueryMsg, Empty>;
+    AppContract<AppError, DCAInstantiateMsg, DCAExecuteMsg, DCAQueryMsg, Empty>;
 
 const DCA_APP: DCAApp = DCAApp::new(DCA_APP_ID, DCA_APP_VERSION, None)
     .with_instantiate(handlers::instantiate_handler)
