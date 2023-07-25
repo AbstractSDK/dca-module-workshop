@@ -2,7 +2,7 @@
 use crate::{
     error::AppError,
     handlers,
-    msg::{AppInstantiateMsg, DCAExecuteMsg, DCAQueryMsg},
+    msg::{DCAInstantiateMsg, DCAExecuteMsg, DCAQueryMsg},
 };
 use abstract_app::AppContract;
 use abstract_core::objects::dependency::StaticDependency;
@@ -22,7 +22,7 @@ pub type AppResult<T = Response> = Result<T, AppError>;
 /// Replace it with our custom instantiate message type.
 pub type DCAApp = AppContract<AppError, Empty, DCAExecuteMsg, DCAQueryMsg, Empty>;
 
-// #0
+// QUEST #0
 // This module application is dependent on two other modules: the CronCat and the Dex module.
 // Find out how to set the dependency for this module.
 // Hint: https://docs.abstract.money/4_get_started/3_module_builder.html?#dependencies

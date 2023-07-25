@@ -2,7 +2,7 @@
 use cosmwasm_std::{DepsMut, Empty, Env, MessageInfo, Response};
 
 use crate::contract::{AppResult, DCAApp};
-use crate::msg::AppInstantiateMsg;
+use crate::msg::DCAInstantiateMsg;
 use crate::state::{Config, CONFIG, NEXT_DCA_ID};
 
 pub fn instantiate_handler(
