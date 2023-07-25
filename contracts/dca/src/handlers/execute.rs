@@ -172,8 +172,8 @@ fn create_dca(
     // QUEST #2
     // Simulate swap first
     // Using the DEX adapter
-    // What is an adapter: https://docs.abstract.money/4_get_started/4_sdk.html
-    // The Dex Adapter: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/adapters/dex/src/api.rs
+    // What is an adapter API: https://docs.abstract.money/4_get_started/4_sdk.html
+    // The Dex Adapter SDK API: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/adapters/dex/src/api.rs
     let dex = app.dex(deps.as_ref(), dex_name.clone().into());
     dex.simulate_swap(source_asset.clone(), target_asset.clone())?;
 
