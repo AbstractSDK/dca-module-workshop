@@ -1,7 +1,7 @@
-use abstract_dca_app::contract::DCAApp as App;
+use std::{env::current_dir, fs::create_dir_all};
+
 use cosmwasm_schema::remove_schemas;
-use std::env::current_dir;
-use std::fs::create_dir_all;
+use dca_app::contract::DCAApp as App;
 
 fn main() {
     let mut out_dir = current_dir().unwrap();
