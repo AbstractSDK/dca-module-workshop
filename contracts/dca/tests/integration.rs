@@ -63,6 +63,8 @@ const VERSION: &str = "1.0";
 const DENOM: &str = "abstr";
 const PAUSE_ADMIN: &str = "cosmos338dwgj5wm2tuahvfjdldz5s8hmt7l5aznw8jz9s2mmgj5c52jqgfq000";
 
+/// A low-level cw-orchestrator setup script
+/// "low-level" because cron-cat doesn't use cw-orch itself.
 fn setup_croncat_contracts(
     mock: MockBech32,
     proxy_addr: String,
@@ -272,6 +274,7 @@ fn setup() -> anyhow::Result<(
 )> {
     // Create the mock
     let mock = MockBech32::new("mock");
+    let abstract_client = AbstractClient::builder(mock.clone()).build()?;
     let sender = mock.sender();
 
     // With funds

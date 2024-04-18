@@ -30,13 +30,15 @@ fn create_convert_task_internal(
 ) -> AbstractSdkResult<CosmosMsg> {
     let interval = dca.frequency.to_interval();
     // QUEST #3.1
-    // With the macro from 3.0, we generated an `Into` message that converts our custom message into the top-level message
+    // With the macro from 3.0, we implement the `From` trait that converts our custom message into the top-level message.
     let task = CronCatTaskRequest {
         interval,
         boundary: None,
         // TODO?: should it be argument?
         stop_on_fail: true,
         actions: vec![CronCatAction {
+            // We want to call this contract's `Convert` method but need to wrap it in the `ExecuteMsg` enum that we generated
+            // in the last quest.
             msg: wasm_execute(
                 env.contract.address,
                 &ExecuteMsg::from(DCAExecuteMsg::Convert { dca_id }),
@@ -56,6 +58,7 @@ fn create_convert_task_internal(
     .into();
     // QUEST #2.3
     // Generate create task message
+    // Croncat API: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/apps/croncat/src/api.rs
     cron_cat.create_task(task, dca_id, assets)
 }
 
@@ -172,14 +175,12 @@ fn create_dca(
     // Only the admin should be able to create dca
     app.admin.assert_admin(deps.as_ref(), &info.sender)?;
 
+    let config = CONFIG.load(deps.storage)?;
+    
     // QUEST #2.1
     // Here we want to validate that a swap can be performed between the two assets.
     // We can check this by doing a swap simulation using the DEX API
     // If the simulation fails, we should return an error
-    let config = CONFIG.load(deps.storage)?;
-
-    // QUEST #2
-    // Simulate swap using the DEX API to ensure that it can be done
     // What is an API: https://docs.abstract.money/4_get_started/4_sdk.html
     // The Dex API: https://github.com/AbstractSDK/abstract/blob/main/modules/contracts/adapters/dex/src/api.rs
     app.ans_dex(deps.as_ref(), dex_name.clone())
