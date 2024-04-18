@@ -1,7 +1,10 @@
 use abstract_app::abstract_core::objects::dependency::StaticDependency;
-#[cfg(feature = "interface")]
-use abstract_app::abstract_core::{manager::ModuleInstallConfig, objects::module::ModuleInfo};
 use abstract_app::AppContract;
+#[cfg(feature = "interface")]
+use abstract_app::{
+    abstract_core::{manager::ModuleInstallConfig, objects::module::ModuleInfo},
+    abstract_interface::{AbstractInterfaceError, DependencyCreation, InstallConfig},
+};
 use cosmwasm_std::{Empty, Response};
 #[cfg(feature = "interface")]
 use croncat_app::contract::interface::Croncat;
@@ -34,7 +37,7 @@ const DCA_APP: DCAApp = DCAApp::new(DCA_APP_ID, DCA_APP_VERSION, None)
     .with_dependencies(&[
         // QUEST #0
         // This module application is dependent on two other modules: the CronCat and the Dex module.
-        // Find out how to set the dependency for this module.
+        // Find out how to add the DEX adapter dependency for this module.
         StaticDependency::new(CRONCAT_ID, &[CRONCAT_MODULE_VERSION]),
         StaticDependency::new(
             abstract_dex_adapter::DEX_ADAPTER_ID,
@@ -50,17 +53,14 @@ abstract_app::export_endpoints!(DCA_APP, DCAApp);
 abstract_app::cw_orch_interface!(DCA_APP, DCAApp, DCA);
 
 #[cfg(feature = "interface")]
-impl<Chain: cw_orch::environment::CwEnv> abstract_app::abstract_interface::DependencyCreation
-    for crate::DCA<Chain>
-{
+impl<Chain: cw_orch::environment::CwEnv> DependencyCreation for crate::DCA<Chain> {
     type DependenciesConfig = cosmwasm_std::Empty;
 
     fn dependency_install_configs(
         _configuration: Self::DependenciesConfig,
-    ) -> Result<Vec<ModuleInstallConfig>, abstract_app::abstract_interface::AbstractInterfaceError>
-    {
+    ) -> Result<Vec<ModuleInstallConfig>, AbstractInterfaceError> {
         let croncat_dependency_install_configs: Vec<ModuleInstallConfig> =
-            <Croncat<Chain> as abstract_app::abstract_interface::DependencyCreation>::dependency_install_configs(
+            <Croncat<Chain> as DependencyCreation>::dependency_install_configs(
                 cosmwasm_std::Empty {},
             )?;
         let adapter_install_config = ModuleInstallConfig::new(
@@ -70,10 +70,9 @@ impl<Chain: cw_orch::environment::CwEnv> abstract_app::abstract_interface::Depen
             )?,
             None,
         );
-        let croncat_install_config =
-            <Croncat<Chain> as abstract_app::abstract_interface::InstallConfig>::install_config(
-                &croncat_app::msg::AppInstantiateMsg {},
-            )?;
+        let croncat_install_config = <Croncat<Chain> as InstallConfig>::install_config(
+            &croncat_app::msg::AppInstantiateMsg {},
+        )?;
 
         Ok([
             croncat_dependency_install_configs,

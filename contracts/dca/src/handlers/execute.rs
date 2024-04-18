@@ -187,7 +187,7 @@ fn create_dca(
 
     // Generate DCA ID
     let dca_id = NEXT_ID.update(deps.storage, |id| AppResult::Ok(id.next_id()))?;
-    
+
     let dca_entry = DCAEntry {
         source_asset,
         target_asset,
