@@ -124,7 +124,7 @@ pub fn execute_handler(
 /// Update the configuration of the app
 fn update_config(
     deps: DepsMut,
-    msg_info: MessageInfo,
+    _msg_info: MessageInfo,
     app: DCAApp,
     new_native_asset: Option<AssetEntry>,
     new_dca_creation_amount: Option<Uint128>,
@@ -134,7 +134,6 @@ fn update_config(
     // QUEST #1
     // Only the admin should be able to call this
     // Hint: https://docs.rs/abstract-app/0.17.0/abstract_app/state/struct.AppContract.html#
-    app.admin.assert_admin(deps.as_ref(), &msg_info.sender)?;
 
     let old_config = CONFIG.load(deps.storage)?;
     let new_native_denom = new_native_asset
