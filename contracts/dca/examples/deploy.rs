@@ -1,11 +1,10 @@
+use abstract_app::abstract_interface::{AppDeployer, DeployStrategy};
 use cw_orch::{
     anyhow,
     prelude::{networks::parse_network, DaemonBuilder},
     tokio::runtime::Runtime,
 };
-
-use abstract_dca_app::{contract::DCA_APP_ID, DCAApp};
-use abstract_interface::AppDeployer;
+use dca_app::{contract::DCA_APP_ID, DCA};
 use semver::Version;
 
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -13,7 +12,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 fn main() -> anyhow::Result<()> {
     dotenv().ok();
     env_logger::init();
-    let chain = parse_network("juno-1");
+    let chain = parse_network("juno-1").unwrap();
     use dotenv::dotenv;
     let version: Version = CONTRACT_VERSION.parse().unwrap();
     let rt = Runtime::new()?;
@@ -21,10 +20,10 @@ fn main() -> anyhow::Result<()> {
         .chain(chain)
         .handle(rt.handle())
         .build()?;
-    let app = DCAApp::new(DCA_APP_ID, chain);
+    let app = DCA::new(DCA_APP_ID, chain);
+
     // QUEST #6
     // Now that we have our app we want to deploy it. Use the abstract AppDeployer trait to deploy the app.
-
-    app.deploy(version)?;
+    app.deploy(version, DeployStrategy::Try)?;
     Ok(())
 }

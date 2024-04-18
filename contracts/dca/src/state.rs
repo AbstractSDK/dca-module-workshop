@@ -1,7 +1,6 @@
-use abstract_core::objects::{AssetEntry, DexName};
-use abstract_dex_adapter::msg::OfferAsset;
+use abstract_app::abstract_core::objects::{AnsAsset, AssetEntry, DexName};
 use cosmwasm_std::{Decimal, Uint128};
-use cw_storage_plus::{Item, Map};
+use cw_storage_plus::{Item, Key, KeyDeserialize, Map, PrimaryKey};
 
 use crate::msg::Frequency;
 
@@ -15,12 +14,51 @@ pub struct Config {
 
 #[cosmwasm_schema::cw_serde]
 pub struct DCAEntry {
-    pub source_asset: OfferAsset,
+    pub source_asset: AnsAsset,
     pub target_asset: AssetEntry,
     pub frequency: Frequency,
     pub dex: DexName,
 }
 
+#[cosmwasm_schema::cw_serde]
+#[derive(Copy, Default)]
+pub struct DCAId(pub u64);
+
+impl DCAId {
+    pub fn next_id(self) -> Self {
+        Self(self.0 + 1)
+    }
+}
+
+impl<'a> PrimaryKey<'a> for DCAId {
+    type Prefix = ();
+
+    type SubPrefix = ();
+
+    type Suffix = Self;
+
+    type SuperSuffix = Self;
+
+    fn key(&self) -> Vec<Key> {
+        self.0.key()
+    }
+}
+
+impl KeyDeserialize for DCAId {
+    type Output = u64;
+
+    fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
+        u64::from_vec(value)
+    }
+}
+
+// Convert it to croncat tag
+impl From<DCAId> for String {
+    fn from(DCAId(id): DCAId) -> Self {
+        format!("dca_{id}")
+    }
+}
+
 pub const CONFIG: Item<Config> = Item::new("config");
-pub const NEXT_DCA_ID: Item<u64> = Item::new("next_id");
-pub const DCA_LIST: Map<String, DCAEntry> = Map::new("dca_list");
+pub const NEXT_ID: Item<DCAId> = Item::new("next_id");
+pub const DCA_LIST: Map<DCAId, DCAEntry> = Map::new("dca_list");
