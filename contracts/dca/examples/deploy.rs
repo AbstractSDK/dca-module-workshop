@@ -50,6 +50,6 @@ fn main() -> anyhow::Result<()> {
 
     // QUEST #6
     // Publish the App to the Abstract Platform
-    publisher.publish_app::<DCA<Daemon>>()?;
+
     Ok(())
 }

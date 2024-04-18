@@ -279,11 +279,6 @@ fn setup() -> anyhow::Result<(
 
     let (cron_cat_addrs, _) = setup_croncat_contracts(mock.clone(), sender.to_string())?;
 
-    // Construct the DCA interface
-
-    // QUEST #4 You need to deploy Abstract and the dependencies before deploying your app.
-    // We made this super easy! Just use the `AbstractClient` and `Publisher` to deploy the dependencies.
-
     // Deploy Abstract to the mock with the client
     let abstract_client = AbstractClient::builder(mock.clone())
         .assets(vec![("denom".to_owned(), AssetInfo::native(DENOM).into())])
@@ -293,10 +288,11 @@ fn setup() -> anyhow::Result<(
     // Deploy wyndex to the mock
     let wyndex = wyndex_bundle::WynDex::deploy_on(mock.clone(), Empty {})?;
 
-    // Deploy dex adapter to the mock
     let abstract_publisher = abstract_client
-        .publisher_builder(Namespace::from_id(DEX_ADAPTER_ID)?)
-        .build()?;
+    .publisher_builder(Namespace::from_id(DEX_ADAPTER_ID)?)
+    .build()?;
+
+    // Deploy dex adapter to the mock
     let dex_adapter = abstract_publisher.publish_adapter(DexInstantiateMsg {
         swap_fee: Decimal::percent(1),
         recipient_account: 0,
@@ -310,8 +306,10 @@ fn setup() -> anyhow::Result<(
     // Publish croncat
     cron_cat_publisher.publish_app::<Croncat<MockBech32>>()?;
 
-    // Publish dca app to the mock
-    abstract_publisher.publish_app::<DCA<MockBech32>>()?;
+    // QUEST #4 You need to deploy Abstract and the dependencies before deploying your app.
+    // We made this super easy! Just use the `AbstractClient` and `Publisher` to deploy the dependencies.
+    // Publish the DCA app
+
 
     // Create a new account and install the app onto
     let account = abstract_client
@@ -406,20 +404,18 @@ fn successful_install() -> anyhow::Result<()> {
 fn create_dca_convert() -> anyhow::Result<()> {
     let (mock, account, _abstr, mut apps, croncat_addrs) = setup()?;
 
-    // QUEST #5.0
-    // create 2 dcas
     apps.dca_app.create_dca(
         WYNDEX.to_owned(),
         Frequency::EveryNBlocks(1),
         AnsAsset::new(EUR, 100_u128),
         USD.into(),
     )?;
-    apps.dca_app.create_dca(
-        WYNDEX.to_owned(),
-        Frequency::Cron("0 0 0 1 1 * *".to_owned()),
-        AnsAsset::new(EUR, 250_u128),
-        USD.into(),
-    )?;
+    
+    // QUEST #5.0
+    // create dca
+    // Frequency::Cron("0 0 0 1 1 * *".to_owned()),
+    // AnsAsset::new(EUR, 250_u128),
+    // USD.into(),
 
     // First dca
     let dca = apps.dca_app.dca(DCAId(1))?;
@@ -554,7 +550,7 @@ fn update_dca() -> anyhow::Result<()> {
     
     // QUEST #5.1
     // call DCA with DCAId 1
-    let dca = apps.dca_app.dca(DCAId(1))?;
+
     assert_eq!(
         dca,
         DCAResponse {
