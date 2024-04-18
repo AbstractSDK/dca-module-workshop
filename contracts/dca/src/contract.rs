@@ -28,7 +28,7 @@ pub type AppResult<T = Response> = Result<T, DCAError>;
 ///  The custom instantiate message is set to `Empty` but we want to set some state on instantiation.
 /// Replace it with our custom instantiate message type.
 /// The type of the app that is used to build your app and access the Abstract SDK features.
-pub type DCAApp = AppContract<DCAError, AppInstantiateMsg, DCAExecuteMsg, DCAQueryMsg, Empty>;
+pub type DCAApp = AppContract<DCAError, Empty, DCAExecuteMsg, DCAQueryMsg, Empty>;
 
 const DCA_APP: DCAApp = DCAApp::new(DCA_APP_ID, DCA_APP_VERSION, None)
     .with_instantiate(handlers::instantiate_handler)

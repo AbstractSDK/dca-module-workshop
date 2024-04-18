@@ -6,7 +6,7 @@ use abstract_app::abstract_sdk::{
     AbstractSdkResult,
 };
 use abstract_dex_adapter::api::DexInterface;
-use cosmwasm_std::{wasm_execute, CosmosMsg, Decimal, DepsMut, Env, MessageInfo, Response, Uint128};
+use cosmwasm_std::{wasm_execute, CosmosMsg, Decimal, DepsMut, Empty, Env, MessageInfo, Response, Uint128};
 use croncat_app::{
     croncat_integration_utils::{CronCatAction, CronCatTaskRequest},
     CronCat, CronCatInterface,
@@ -29,19 +29,18 @@ fn create_convert_task_internal(
     config: Config,
 ) -> AbstractSdkResult<CosmosMsg> {
     let interval = dca.frequency.to_interval();
-    // QUEST #3.1
-    // With the macro from 3.0, we implement the `From` trait that converts our custom message into the top-level message.
     let task = CronCatTaskRequest {
         interval,
         boundary: None,
-        // TODO?: should it be argument?
         stop_on_fail: true,
         actions: vec![CronCatAction {
-            // We want to call this contract's `Convert` method but need to wrap it in the `ExecuteMsg` enum that we generated
-            // in the last quest.
             msg: wasm_execute(
                 env.contract.address,
-                &ExecuteMsg::from(DCAExecuteMsg::Convert { dca_id }),
+                // QUEST #3.1
+                // With the macro from 3.0, we implement the `From` trait that converts our custom message into the top-level message.
+                // We want to call this contract's `Convert` method but need to wrap it in the `ExecuteMsg` enum that we generated
+                // in the last quest.
+                &Empty {},
                 vec![],
             )?
             .into(),

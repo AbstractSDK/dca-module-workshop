@@ -1,11 +1,10 @@
 use abstract_app::abstract_sdk::features::AbstractNameService;
-use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{Addr, DepsMut, Empty, Env, MessageInfo, Response};
 use cw_asset::AssetInfoBase;
 
 use crate::{
     contract::{AppResult, DCAApp},
     error::DCAError,
-    msg::AppInstantiateMsg,
     state::{Config, CONFIG, NEXT_ID},
 };
 
@@ -16,21 +15,16 @@ pub fn instantiate_handler(
     app: DCAApp,
     // QUEST #3.3
     // Replace this with the custom instantiate message type and set the `Config` object with it.
-    msg: AppInstantiateMsg,
+    msg: Empty,
 ) -> AppResult {
     let name_service = app.name_service(deps.as_ref());
-    let asset = name_service.query(&msg.native_asset)?;
+    let asset: AssetInfoBase<Addr>  = todo!("Query the ANS with the msg's native_asset to get the denom.");
     let native_denom = match asset {
         AssetInfoBase::Native(denom) => denom,
         _ => return Err(DCAError::NotNativeAsset {}),
     };
 
-    let config: Config = Config {
-        native_denom,
-        dca_creation_amount: msg.dca_creation_amount,
-        refill_threshold: msg.refill_threshold,
-        max_spread: msg.max_spread,
-    };
+    let config: Config = todo!();
 
     CONFIG.save(deps.storage, &config)?;
     NEXT_ID.save(deps.storage, &Default::default())?;

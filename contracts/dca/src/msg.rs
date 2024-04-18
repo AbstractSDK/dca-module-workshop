@@ -15,17 +15,20 @@ use crate::{
 
 // QUEST #3.0
 // Replace the following boilerplate with a simple macro call!
+// https://docs.rs/abstract-app/latest/abstract_app/macro.app_msg_types.html
+// {
 
 // These types are your contract API types.
-// pub type InstantiateMsg = <DCAApp as abstract_sdk::base::InstantiateEndpoint>::InstantiateMsg;
-// pub type ExecuteMsg = <DCAApp as abstract_sdk::base::ExecuteEndpoint>::ExecuteMsg;
-// pub type QueryMsg = <DCAApp as abstract_sdk::base::QueryEndpoint>::QueryMsg;
-// pub type MigrateMsg = <DCAApp as abstract_sdk::base::MigrateEndpoint>::MigrateMsg;
+pub type InstantiateMsg = <DCAApp as abstract_app::abstract_sdk::base::InstantiateEndpoint>::InstantiateMsg;
+pub type ExecuteMsg = <DCAApp as abstract_app::abstract_sdk::base::ExecuteEndpoint>::ExecuteMsg;
+pub type QueryMsg = <DCAApp as abstract_app::abstract_sdk::base::QueryEndpoint>::QueryMsg;
+pub type MigrateMsg = <DCAApp as abstract_app::abstract_sdk::base::MigrateEndpoint>::MigrateMsg;
 
 // These traits indicate that your custom messages are used in the App.
-// impl abstract_core::app::AppExecuteMsg for DcaExecuteMsg {}
-// impl abstract_core::app::AppQueryMsg for DcaQueryMsg {}
-abstract_app::app_msg_types!(DCAApp, DCAExecuteMsg, DCAQueryMsg);
+impl abstract_app::abstract_core::app::AppExecuteMsg for DCAExecuteMsg {}
+impl abstract_app::abstract_core::app::AppQueryMsg for DCAQueryMsg {}
+
+// }
 
 #[cosmwasm_schema::cw_serde]
 #[non_exhaustive]
