@@ -37,7 +37,7 @@ use dca_app::{
     state::{DCAEntry, DCAId},
     *,
 };
-use wyndex_bundle::{WynDex, EUR, USD, WYNDEX as WYNDEX_WITHOUT_CHAIN};
+use wyndex_bundle::{WynDex, EUR, USD, WYNDEX};
 
 #[allow(unused)]
 struct CronCatAddrs {
@@ -277,17 +277,19 @@ fn setup() -> anyhow::Result<(
     mock.add_balance(&sender, coins(6_000_000_000, DENOM))?;
     mock.add_balance(&mock.addr_make(AGENT), coins(6_000_000_000, DENOM))?;
 
-    let (cron_cat_addrs, _proxy) = setup_croncat_contracts(mock.clone(), sender.to_string())?;
+    let (cron_cat_addrs, _) = setup_croncat_contracts(mock.clone(), sender.to_string())?;
 
     // Construct the DCA interface
 
-    // QUEST #4 You need to deploy the Abstract framework before you can deploy the DCA app.
-    // We made this super easy! Just use the cw-orchestrator `Deploy` trait that we implemented for Abstract.
-    // Fix the test by deploying Wyndex!
-    // Deploy Abstract to the mock
+    // QUEST #4 You need to deploy Abstract and the dependencies before deploying your app.
+    // We made this super easy! Just use the `AbstractClient` and `Publisher` to deploy the dependencies.
+
+    // Deploy Abstract to the mock with the client
     let abstract_client = AbstractClient::builder(mock.clone())
         .assets(vec![("denom".to_owned(), AssetInfo::native(DENOM).into())])
+        .contract(UncheckedContractEntry::try_from(CRON_CAT_FACTORY)?, cron_cat_addrs.factory.to_string())
         .build()?;
+    
     // Deploy wyndex to the mock
     let wyndex = wyndex_bundle::WynDex::deploy_on(mock.clone(), Empty {})?;
 
@@ -307,12 +309,6 @@ fn setup() -> anyhow::Result<(
 
     // Publish croncat
     cron_cat_publisher.publish_app::<Croncat<MockBech32>>()?;
-    // Register factory entry to the Abstract Name Service
-    let factory_entry = UncheckedContractEntry::try_from(CRON_CAT_FACTORY)?;
-    abstract_client.name_service().update_contract_addresses(
-        vec![(factory_entry, cron_cat_addrs.factory.to_string())],
-        vec![],
-    )?;
 
     // Publish dca app to the mock
     abstract_publisher.publish_app::<DCA<MockBech32>>()?;
@@ -413,14 +409,13 @@ fn create_dca_convert() -> anyhow::Result<()> {
     // QUEST #5.0
     // create 2 dcas
     apps.dca_app.create_dca(
-        WYNDEX_WITHOUT_CHAIN.to_owned(),
+        WYNDEX.to_owned(),
         Frequency::EveryNBlocks(1),
         AnsAsset::new(EUR, 100_u128),
         USD.into(),
     )?;
     apps.dca_app.create_dca(
-        WYNDEX_WITHOUT_CHAIN.to_owned(),
-        // HAPPY NEW YEAR :D
+        WYNDEX.to_owned(),
         Frequency::Cron("0 0 0 1 1 * *".to_owned()),
         AnsAsset::new(EUR, 250_u128),
         USD.into(),
@@ -435,7 +430,7 @@ fn create_dca_convert() -> anyhow::Result<()> {
                 source_asset: AnsAsset::new(EUR, 100_u128),
                 target_asset: USD.into(),
                 frequency: Frequency::EveryNBlocks(1),
-                dex: WYNDEX_WITHOUT_CHAIN.to_owned()
+                dex: WYNDEX.to_owned()
             }),
             pool_references: vec![PoolReference::new(
                 UniquePoolId::new(1),
@@ -453,7 +448,7 @@ fn create_dca_convert() -> anyhow::Result<()> {
                 source_asset: AnsAsset::new(EUR, 250_u128),
                 target_asset: USD.into(),
                 frequency: Frequency::Cron("0 0 0 1 1 * *".to_owned()),
-                dex: WYNDEX_WITHOUT_CHAIN.to_owned()
+                dex: WYNDEX.to_owned()
             }),
             pool_references: vec![PoolReference::new(
                 UniquePoolId::new(1),
@@ -488,7 +483,7 @@ fn create_dca_convert_negative() -> anyhow::Result<()> {
 
     // Not existing pair
     let err = apps.dca_app.create_dca(
-        WYNDEX_WITHOUT_CHAIN.to_owned(),
+        WYNDEX.to_owned(),
         Frequency::EveryNBlocks(1),
         AnsAsset::new(USD, 100_u128),
         USD.into(),
@@ -499,7 +494,7 @@ fn create_dca_convert_negative() -> anyhow::Result<()> {
             pairing: DexAssetPairing::new(
                 AssetEntry::new(USD),
                 AssetEntry::new(USD),
-                WYNDEX_WITHOUT_CHAIN,
+                WYNDEX,
             ),
             ans_host: abstr.name_service().address()?,
         },
@@ -507,7 +502,7 @@ fn create_dca_convert_negative() -> anyhow::Result<()> {
 
     // Bad crontab string
     let err = apps.dca_app.create_dca(
-        WYNDEX_WITHOUT_CHAIN.to_owned(),
+        WYNDEX.to_owned(),
         Frequency::Cron("bad cron".to_owned()),
         AnsAsset::new(USD, 100_u128),
         EUR.into(),
@@ -515,7 +510,7 @@ fn create_dca_convert_negative() -> anyhow::Result<()> {
     assert_eq!(err.unwrap_err().root().to_string(), "Invalid interval");
 
     apps.dca_app.create_dca(
-        WYNDEX_WITHOUT_CHAIN.to_owned(),
+        WYNDEX.to_owned(),
         Frequency::EveryNBlocks(1),
         AnsAsset::new(EUR, 100_u128),
         USD.into(),
@@ -536,7 +531,7 @@ fn update_dca() -> anyhow::Result<()> {
 
     // create dca
     apps.dca_app.create_dca(
-        WYNDEX_WITHOUT_CHAIN.to_owned(),
+        WYNDEX.to_owned(),
         Frequency::EveryNBlocks(1),
         AnsAsset::new(EUR, 150_u128),
         USD.into(),
@@ -549,16 +544,16 @@ fn update_dca() -> anyhow::Result<()> {
         .unwrap()
         .task_hash;
 
-    // QUEST #5.1
-    // Update dca
     apps.dca_app.update_dca(
         DCAId(1),
-        Some(WYNDEX_WITHOUT_CHAIN.into()),
+        Some(WYNDEX.into()),
         Some(Frequency::Cron("0 30 * * * *".to_string())),
         Some(AnsAsset::new(USD, 200_u128)),
         Some(EUR.into()),
     )?;
-
+    
+    // QUEST #5.1
+    // call DCA with DCAId 1
     let dca = apps.dca_app.dca(DCAId(1))?;
     assert_eq!(
         dca,
@@ -567,7 +562,7 @@ fn update_dca() -> anyhow::Result<()> {
                 source_asset: AnsAsset::new(USD, 200_u128),
                 target_asset: EUR.into(),
                 frequency: Frequency::Cron("0 30 * * * *".to_string()),
-                dex: WYNDEX_WITHOUT_CHAIN.to_owned()
+                dex: WYNDEX.to_owned()
             }),
             pool_references: vec![PoolReference::new(
                 UniquePoolId::new(1),
@@ -602,7 +597,7 @@ fn update_dca() -> anyhow::Result<()> {
                 source_asset: AnsAsset::new(USD, 250_u128),
                 target_asset: AssetEntry::new(EUR),
                 frequency: Frequency::Cron("0 30 * * * *".to_string()),
-                dex: WYNDEX_WITHOUT_CHAIN.to_owned()
+                dex: WYNDEX.to_owned()
             }),
             pool_references: vec![PoolReference::new(
                 UniquePoolId::new(1),
@@ -629,7 +624,7 @@ fn update_dca_negative() -> anyhow::Result<()> {
 
     // create dca
     apps.dca_app.create_dca(
-        WYNDEX_WITHOUT_CHAIN.to_owned(),
+        WYNDEX.to_owned(),
         Frequency::EveryNBlocks(1),
         AnsAsset::new(EUR, 150_u128),
         USD.into(),
@@ -650,7 +645,7 @@ fn update_dca_negative() -> anyhow::Result<()> {
             pairing: DexAssetPairing::new(
                 AssetEntry::new(USD),
                 AssetEntry::new(USD),
-                WYNDEX_WITHOUT_CHAIN,
+                WYNDEX,
             ),
             ans_host: abstr.name_service().address()?,
         },
@@ -675,7 +670,7 @@ fn cancel_dca() -> anyhow::Result<()> {
 
     // create dca
     apps.dca_app.create_dca(
-        WYNDEX_WITHOUT_CHAIN.to_owned(),
+        WYNDEX.to_owned(),
         Frequency::EveryNBlocks(1),
         AnsAsset::new(EUR, 100_u128),
         USD.into(),
