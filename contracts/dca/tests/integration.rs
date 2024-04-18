@@ -340,7 +340,7 @@ fn setup() -> anyhow::Result<(
         vec![coin(50_000_000, DENOM), coin(10_000, EUR)],
     )?;
 
-    let cron_cat_app = account.application()?;
+    let cron_cat_app = account.application::<Croncat<MockBech32>>()?;
     let deployed_apps = DeployedApps {
         dca_app,
         dex_adapter,
