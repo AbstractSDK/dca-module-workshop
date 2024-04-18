@@ -39,10 +39,6 @@ const DCA_APP: DCAApp = DCAApp::new(DCA_APP_ID, DCA_APP_VERSION, None)
         // This module application is dependent on two other modules: the CronCat and the Dex module.
         // Find out how to add the DEX adapter dependency for this module.
         StaticDependency::new(CRONCAT_ID, &[CRONCAT_MODULE_VERSION]),
-        StaticDependency::new(
-            abstract_dex_adapter::DEX_ADAPTER_ID,
-            &[abstract_dex_adapter::contract::CONTRACT_VERSION],
-        ),
     ]);
 
 // Export handlers
