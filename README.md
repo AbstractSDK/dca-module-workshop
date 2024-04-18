@@ -3,6 +3,8 @@
 This workshop will be a hands-on introduction to building apps with [Abstract](https://abstract.money). We'll be completing a dollar-cost-averaging app that will allow users to set up recurring purchases of a token of the
 ir choice. The goal of the workshop is to have the app's tests passing by the end of the workshop, setting you up to build your own apps with Abstract.
 
+> `solution` branch contains the quests with the solutions. `quests` branch contains the quests without the solutions.
+
 ## Prerequisites
 
 Have a brief look at the required prerequisites [here](https://docs.abstract.money/4_get_started/2_installation.html). The recommended tools won't be required for this workshop.
