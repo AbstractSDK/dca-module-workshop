@@ -31,28 +31,15 @@ keywords = ["cosmos", "cosmwasm", "framework"]
 cosmwasm-std = { version = "1.5" }
 cosmwasm-schema = { version = "1.5" }
 cw-controllers = { version = "1.1.2" }
-cw-utils = { version = "1.0" }
 cw-storage-plus = "1.2.0"
-cw2 = { version = "1.1.2" }
-cw20-base = { package = "abstract-cw20-base", version = "1.3.0", features = [
-  "library",
-] }
-cw20 = { package = "abstract-cw20", version = "1.3.0" }
 
 cw-asset = { version = "3.0" }
-cw-ownable = { version = "0.5" }
-cw-address-like = { version = "1.0" }
 
 schemars = "0.8"
-serde = { version = "1.0", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0" }
-protobuf = { version = "2", features = ["with-bytes"] }
 
 clap = { version = "4.0.32", features = ["derive"] }
-semver = "1.0"
-cw-semver = { version = "1.0" }
 cw-orch = { version = "0.20.1" }
-tokio = { version = "1.4", features = ["full"] }
 
 ## crates in order of publishing ## see docs/Publishing.md
 
@@ -68,12 +55,6 @@ abstract-adapter-utils = { git = "https://github.com/AbstractSDK/abstract.git", 
 abstract-dex-adapter-traits = { git = "https://github.com/AbstractSDK/abstract.git", tag = "v0.21.0" }
 abstract-staking-adapter-traits = { git = "https://github.com/AbstractSDK/abstract.git", tag = "v0.21.0" }
 
-# Juno dexes #
-abstract-wyndex-adapter = { git = "https://github.com/AbstractSDK/abstract.git", tag = "v0.21.0", default-features = false }
-# Osmosis #
-abstract-osmosis-adapter = { git = "https://github.com/AbstractSDK/abstract.git", tag = "v0.21.0", default-features = false }
-# Terra #
-abstract-astroport-adapter = { git = "https://github.com/AbstractSDK/abstract.git", tag = "v0.21.0", default-features = false }
 croncat-app = { git = "https://github.com/AbstractSDK/abstract.git", tag = "v0.21.0" }
 wyndex-bundle = { git = "https://github.com/AbstractSDK/abstract.git", tag = "v0.21.0" }
 

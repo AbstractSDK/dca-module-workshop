@@ -14,6 +14,8 @@ pub fn instantiate_handler(
     _env: Env,
     _info: MessageInfo,
     app: DCAApp,
+    // QUEST #3.3
+    // Replace this with the custom instantiate message type and set the `Config` object with it.
     msg: AppInstantiateMsg,
 ) -> AppResult {
     let name_service = app.name_service(deps.as_ref());
@@ -22,6 +24,7 @@ pub fn instantiate_handler(
         AssetInfoBase::Native(denom) => denom,
         _ => return Err(DCAError::NotNativeAsset {}),
     };
+
     let config: Config = Config {
         native_denom,
         dca_creation_amount: msg.dca_creation_amount,

@@ -283,6 +283,9 @@ fn setup() -> anyhow::Result<(
     // Construct the DCA interface
     let mut dca_app = DCA::new(DCA_APP_ID, mock.clone());
 
+    // QUEST #4 You need to deploy the Abstract framework before you can deploy the DCA app.
+    // We made this super easy! Just use the cw-orchestrator `Deploy` trait that we implemented for Abstract.
+    // Fix the test by deploying Wyndex!
     // Deploy Abstract to the mock
     let abstr_deployment = Abstract::deploy_on(mock.clone(), sender.to_string())?;
     abstr_deployment.ans_host.execute(
@@ -322,7 +325,7 @@ fn setup() -> anyhow::Result<(
         DeployStrategy::Try,
     )?;
 
-    // Register factory entry
+    // Register factory entry to the Abstract Name Service
     let factory_entry = UncheckedContractEntry::try_from(CRON_CAT_FACTORY)?;
     abstr_deployment.ans_host.execute(
         &abstract_app::abstract_core::ans_host::ExecuteMsg::UpdateContractAddresses {
@@ -338,7 +341,7 @@ fn setup() -> anyhow::Result<(
             .create_default_account(GovernanceDetails::Monarchy {
                 monarch: mock.sender().to_string(),
             })?;
-    // Install DEX
+    // Install DEX adapter
     account.install_adapter(&dex_adapter, None)?;
 
     // Install croncat
@@ -492,6 +495,7 @@ fn successful_install() -> anyhow::Result<()> {
 fn create_dca_convert() -> anyhow::Result<()> {
     let (mock, account, _abstr, mut apps, croncat_addrs) = setup()?;
 
+    // QUEST #5.0
     // create 2 dcas
     apps.dca_app.create_dca(
         WYNDEX_WITHOUT_CHAIN.to_owned(),
@@ -630,6 +634,8 @@ fn update_dca() -> anyhow::Result<()> {
         .unwrap()
         .task_hash;
 
+    // QUEST #5.1
+    // Update dca
     apps.dca_app.update_dca(
         DCAId(1),
         Some(WYNDEX_WITHOUT_CHAIN.into()),
