@@ -282,9 +282,12 @@ fn setup() -> anyhow::Result<(
     // Deploy Abstract to the mock with the client
     let abstract_client = AbstractClient::builder(mock.clone())
         .assets(vec![("denom".to_owned(), AssetInfo::native(DENOM).into())])
-        .contract(UncheckedContractEntry::try_from(CRON_CAT_FACTORY)?, cron_cat_addrs.factory.to_string())
+        .contract(
+            UncheckedContractEntry::try_from(CRON_CAT_FACTORY)?,
+            cron_cat_addrs.factory.to_string(),
+        )
         .build()?;
-    
+
     // Deploy wyndex to the mock
     let wyndex = wyndex_bundle::WynDex::deploy_on(mock.clone(), Empty {})?;
 
@@ -487,11 +490,7 @@ fn create_dca_convert_negative() -> anyhow::Result<()> {
     assert_querrier_err_eq(
         err.unwrap_err(),
         AnsHostError::DexPairingNotFound {
-            pairing: DexAssetPairing::new(
-                AssetEntry::new(USD),
-                AssetEntry::new(USD),
-                WYNDEX,
-            ),
+            pairing: DexAssetPairing::new(AssetEntry::new(USD), AssetEntry::new(USD), WYNDEX),
             ans_host: abstr.name_service().address()?,
         },
     );
@@ -547,7 +546,7 @@ fn update_dca() -> anyhow::Result<()> {
         Some(AnsAsset::new(USD, 200_u128)),
         Some(EUR.into()),
     )?;
-    
+
     // QUEST #5.1
     // call DCA with DCAId 1
 
@@ -638,11 +637,7 @@ fn update_dca_negative() -> anyhow::Result<()> {
     assert_querrier_err_eq(
         err.unwrap_err(),
         AnsHostError::DexPairingNotFound {
-            pairing: DexAssetPairing::new(
-                AssetEntry::new(USD),
-                AssetEntry::new(USD),
-                WYNDEX,
-            ),
+            pairing: DexAssetPairing::new(AssetEntry::new(USD), AssetEntry::new(USD), WYNDEX),
             ans_host: abstr.name_service().address()?,
         },
     );
