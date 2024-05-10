@@ -176,7 +176,7 @@ fn create_dca(
     app.admin.assert_admin(deps.as_ref(), &info.sender)?;
 
     let config = CONFIG.load(deps.storage)?;
-    
+
     // QUEST #2.1
     // Here we want to validate that a swap can be performed between the two assets.
     // We can check this by doing a swap simulation using the DEX API

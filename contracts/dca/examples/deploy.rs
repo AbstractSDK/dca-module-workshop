@@ -1,29 +1,11 @@
-use abstract_app::abstract_interface::{AppDeployer, DeployStrategy};
 use abstract_client::{AbstractClient, Namespace, Publisher};
 use cw_orch::{
-    anyhow, daemon::{ChainInfo, ChainKind, Daemon, NetworkInfo}, prelude::{DaemonBuilder, TxHandler}, tokio::runtime::Runtime
+    anyhow,
+    daemon::{networks::CONSTANTINE_3, Daemon},
+    prelude::{DaemonBuilder, TxHandler},
+    tokio::runtime::Runtime,
 };
 use dca_app::{contract::DCA_APP_ID, DCA};
-use semver::Version;
-
-const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-
-pub const ROLLKIT_NETWORK: NetworkInfo = NetworkInfo {
-    id: "rollkit",
-    pub_address_prefix: "wasm",
-    coin_type: 118u32,
-};
-
-pub const LOCAL_ROLLKIT: ChainInfo = ChainInfo {
-    kind: ChainKind::Local,
-    chain_id: "celeswasm",
-    gas_denom: "uwasm",
-    gas_price: 0.025,
-    grpc_urls: &["http://localhost:9290"],
-    network_info: ROLLKIT_NETWORK,
-    lcd_url: None,
-    fcd_url: None,
-};
 
 fn main() -> anyhow::Result<()> {
     dotenv::dotenv().ok();
@@ -33,7 +15,7 @@ fn main() -> anyhow::Result<()> {
     let rt = Runtime::new()?;
     let chain = DaemonBuilder::default()
         .handle(rt.handle())
-        .chain(LOCAL_ROLLKIT)
+        .chain(CONSTANTINE_3)
         .build()?;
 
     let app_namespace = Namespace::from_id(DCA_APP_ID)?;
